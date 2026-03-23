@@ -94,8 +94,8 @@ SELECT t.JOB_NAME, t.JOB_GROUP, t.TRIGGER_STATE, t.NEXT_FIRE_TIME, t.PREV_FIRE_T
        c.TRIGGER_TYPE, c.CRON, c.INTERVAL_SECOND
 FROM QRTZ_TRIGGERS t
 LEFT JOIN JOB_CONFIG c
-       ON c.JOB_NAME  COLLATE utf8mb4_unicode_ci = t.JOB_NAME  COLLATE utf8mb4_unicode_ci
-      AND c.JOB_GROUP COLLATE utf8mb4_unicode_ci = t.JOB_GROUP COLLATE utf8mb4_unicode_ci
+       ON c.JOB_NAME  = t.JOB_NAME
+      AND c.JOB_GROUP = t.JOB_GROUP
 WHERE {where}
 ORDER BY t.JOB_GROUP, t.JOB_NAME
 LIMIT @offset, @size";

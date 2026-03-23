@@ -23,6 +23,14 @@
     </ItemGroup>
 
     <ItemGroup>
+      <!-- 数据库初始化 SQL，随应用一起发布 -->
+      <Content Include="..\scripts\init_database.sql">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <TargetPath>init_database.sql</TargetPath>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
       <Folder Include="Jobs\" />
     </ItemGroup>
 

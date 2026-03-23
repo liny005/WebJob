@@ -97,6 +97,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// 启动时自动检查并创建数据库表结构（幂等，可重复执行）
+await DatabaseInitializer.InitializeAsync(
+    AppConfig.ConnectionString,
+    app.Services.GetRequiredService<ILogger<Program>>());
+
 app.UseCors("AllowAll");
 
 app.UseDefaultFiles();
