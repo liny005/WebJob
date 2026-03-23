@@ -67,3 +67,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # 7. 把镜像包设为公开，任何人无需登录即可 docker pull
+      #    ghcr.io 新建的 package 默认私有，这步确保每次发布后都是公开状态
+      - name: Set package visibility to public
+        run: |
+          PKG_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')
+          gh api graphql -f query="
+            mutation {
+              changeUserPackageVisibility(input: {
+                ownerId: \"$(gh api /users/${{ github.repository_owner }} --jq .node_id)\",
+                visibility: PUBLIC,
+                packageName: \"$PKG_NAME\",
+                packageType: CONTAINER
+              }) { clientMutationId }
+            }
+          " || echo "::notice::镜像包已是公开状态或无需变更"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
