@@ -200,6 +200,8 @@ docker run -d \
 docker run -d ... ghcr.io/liny005/webjob:1.0.0
 ```
 
+> **首次发布后需做一次**：进入 [https://github.com/liny005/WebJob/pkgs/container/webjob](https://github.com/liny005/WebJob/pkgs/container/webjob) → **Package settings** → **Change visibility → Public**，之后所有人无需登录即可 `docker pull`。
+
 ### 方式二：从源码自行构建
 
 ```bash
