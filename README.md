@@ -2,6 +2,27 @@
 
 > 基于 **.NET 10 + Quartz.NET + MySQL** 实现的 HTTP Job 调度管理平台，提供 Web UI 与 REST API，支持任务的增删改查、立即执行、日志追踪、操作审计、用户权限管理与钉钉推送通知。
 
+[![Build & Publish Docker Image](https://github.com/liny005/WebJob/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/liny005/WebJob/actions/workflows/docker-publish.yml)
+[![ghcr.io](https://img.shields.io/badge/ghcr.io-liny005%2Fwebjob-blue?logo=docker)](https://github.com/liny005/WebJob/pkgs/container/webjob)
+
+## 🚀 快速启动（无需拉取代码）
+
+只需要有一个 MySQL 实例，一条命令即可运行：
+
+```bash
+docker run -d \
+  --name dotjob \
+  -p 8080:8080 \
+  -e "ConnectionStrings__MysqlConnection=Server=<host>;Port=3306;Uid=<user>;Pwd=<password>;Database=job;Charset=utf8mb4;Min Pool Size=5;Max Pool Size=100;Connection Timeout=30;Default Command Timeout=30" \
+  ghcr.io/liny005/webjob:latest
+```
+
+- 替换 `<host>`、`<user>`、`<password>` 为你的 MySQL 信息
+- **首次启动**自动创建数据库和所有表，无需手动执行 SQL
+- 浏览器访问 [http://localhost:8080](http://localhost:8080)，默认账号 `admin` / `admin123`
+
+> **镜像支持平台：** `linux/amd64`、`linux/arm64`（Apple Silicon / 云服务器均可）
+
 ---
 
 ## 目录
@@ -10,6 +31,7 @@
 - [技术栈](#技术栈)
 - [功能特性](#功能特性)
 - [项目结构](#项目结构)
+- [Docker 部署](#docker-部署)
 - [快速上手](#快速上手)
 - [配置说明](#配置说明)
 - [API 文档](#api-文档)
@@ -154,6 +176,66 @@ DotJob/
 │
 └── scripts/
     └── init_database.sql           # 数据库初始化脚本（含 Quartz 表 + 业务表）
+```
+
+---
+
+## Docker 部署
+
+> 应用启动时会**自动检查并创建**所有数据库表结构（幂等，可重复执行）。
+
+### 方式一：直接使用发布的镜像（推荐）
+
+无需拉取代码，直接 pull 运行：
+
+```bash
+# 最新版
+docker run -d \
+  --name dotjob \
+  -p 8080:8080 \
+  -e "ConnectionStrings__MysqlConnection=Server=<host>;Port=3306;Uid=<user>;Pwd=<password>;Database=job;Charset=utf8mb4;Min Pool Size=5;Max Pool Size=100;Connection Timeout=30;Default Command Timeout=30" \
+  ghcr.io/liny005/webjob:latest
+
+# 指定版本（推荐生产环境固定版本号）
+docker run -d ... ghcr.io/liny005/webjob:1.0.0
+```
+
+### 方式二：从源码自行构建
+
+```bash
+git clone https://github.com/liny005/WebJob.git
+cd WebJob
+
+docker build -t dotjob:latest .
+
+docker run -d \
+  --name dotjob \
+  -p 8080:8080 \
+  -e "ConnectionStrings__MysqlConnection=Server=<host>;Port=3306;..." \
+  dotjob:latest
+```
+
+### 前提条件
+
+准备好一个 MySQL 8.x 实例，MySQL 用户需要有 `CREATE DATABASE`、`CREATE TABLE` 权限（首次启动时应用自动建库建表）。
+
+### 可用镜像标签
+
+| 标签 | 说明 |
+|---|---|
+| `latest` | main 分支最新构建 |
+| `1.2.3` | 对应 Git tag `v1.2.3` 的稳定版本 |
+| `1.2` | 该次要版本的最新构建 |
+
+### Docker 相关文件
+
+```
+DotJob/
+├── Dockerfile                          # 多阶段构建（SDK build → ASP.NET Runtime）
+├── .dockerignore                       # 排除 bin/obj/.git 等无关文件
+├── .github/workflows/docker-publish.yml  # CI：push main/tag 自动构建并推送镜像
+└── scripts/
+    └── init_database.sql               # 随应用发布，启动时自动执行
 ```
 
 ---

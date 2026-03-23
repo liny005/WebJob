@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/.git/
+**/.vs/
+**/.idea/
+**/*.user
+**/node_modules/
+DotJob_Tests/
+.dockerignore
+docker-compose*.yml
+README.md
+TROUBLESHOOTING.md
+
