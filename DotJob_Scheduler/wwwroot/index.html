@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebJob任务调度平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        body {
+            background-color: #f5f7fa;
+            min-height: 100vh;
+        }
+        .navbar {
+            background: var(--primary-gradient) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .main-content {
+            padding: 30px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #eee;
+            padding: 20px;
+            border-radius: 15px 15px 0 0 !important;
+        }
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .btn-action {
+            padding: 5px 10px;
+            border-radius: 8px;
+            margin: 0 2px;
+        }
+        .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e1e1e1;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .pagination .page-link {
+            border-radius: 8px;
+            margin: 0 3px;
+            border: none;
+        }
+        .pagination .page-item.active .page-link {
+            background: var(--primary-gradient);
+        }
+        .stat-card {
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .stat-card.total   { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .stat-card.running { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .stat-card.paused  { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .stat-card.blocked { background: linear-gradient(135deg, #1a1a2e 0%, #4a4a6a 100%); }
+        .stat-card h3 { font-size: 2rem; font-weight: 700; margin-bottom: 5px; }
+        .dropdown-menu {
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .modal-content {
+            border-radius: 15px;
+        }
+        .nav-tabs .nav-link {
+            color: rgba(255,255,255,0.75);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px 8px 0 0;
+        }
+        .nav-tabs .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-weight: 600;
+        }
+        .nav-tabs .nav-link:hover:not(.active) {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .admin-badge {
+            font-size: 0.65rem;
+            vertical-align: middle;
+        }
+        .notify-card {
+            border-radius: 15px;
+            border: 1.5px solid #e8eaf0;
+            transition: box-shadow 0.2s;
+        }
+        .notify-card:hover {
+            box-shadow: 0 8px 30px rgba(102,126,234,0.13);
+        }
+        /* 推送配置左侧竖向 Tab */
+        .notify-side-nav {
+            border-right: 1px solid #e8eaf0;
+            min-width: 130px;
+        }
+        .notify-side-nav .nav-link {
+            color: #555;
+            padding: 14px 20px;
+            border-radius: 0;
+            border-left: 3px solid transparent;
+            text-align: left;
+            font-size: 0.95rem;
+            background: none;
+        }
+        .notify-side-nav .nav-link:hover {
+            background: #f5f7fa;
+            color: #667eea;
+        }
+        .notify-side-nav .nav-link.active {
+            color: #667eea;
+            border-left: 3px solid #667eea;
+            background: #f0f3ff;
+            font-weight: 600;
+        }
+        .notify-form-label {
+            text-align: right;
+            padding-right: 12px;
+            color: #555;
+            font-size: 0.9rem;
+            line-height: 38px;
+        }
+        /* 推送配置左侧 Tab */
+        .notify-tab-btn {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            background: none;
+            border: none;
+            border-left: 3px solid transparent;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .notify-tab-btn:hover {
+            background: #f0f4ff;
+            color: #667eea;
+        }
+        .notify-tab-btn.active {
+            border-left-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+            background: #f0f4ff;
+        }
+        /* 自定义轻量 Tooltip */
+        #customTooltip {
+            position: fixed;
+            z-index: 99999;
+            background: #1a1a2e;
+            color: #fff;
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            pointer-events: none;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.12s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        #customTooltip.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-clock-history"></i> DotJob
+            </a>
+            <!-- 导航 Tab -->
+            <ul class="nav nav-tabs border-0 me-auto ms-3" id="mainTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" onclick="switchTab('jobs')">
+                        <i class="bi bi-list-task"></i> 任务列表
+                    </a>
+                </li>
+                <li class="nav-item" id="tabAuditLog">
+                    <a class="nav-link" href="#" onclick="switchTab('audit')">
+                        <i class="bi bi-journal-check"></i> 操作日志
+                    </a>
+                </li>
+                <li class="nav-item d-none" id="tabUserManage">
+                    <a class="nav-link" href="#" onclick="switchTab('users')">
+                        <i class="bi bi-people"></i> 用户管理
+                        <span class="badge bg-warning text-dark admin-badge">Admin</span>
+                    </a>
+                </li>
+                <li class="nav-item d-none" id="tabNotifyConfig">
+                    <a class="nav-link" href="#" onclick="switchTab('notify')">
+                        <i class="bi bi-bell"></i> 推送配置
+                        <span class="badge bg-warning text-dark admin-badge">Admin</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3" id="userDisplay">
+                    <i class="bi bi-person-circle"></i> <span id="displayName">-</span>
+                    <span id="roleBadge" class="badge bg-warning text-dark ms-1 d-none">Admin</span>
+                </span>
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-gear"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li id="menuUserManage" class="d-none">
+                            <a class="dropdown-item" href="#" onclick="switchTab('users')">
+                                <i class="bi bi-people"></i> 用户管理
+                                <span class="badge bg-warning text-dark" style="font-size:0.65rem;">Admin</span>
+                            </a>
+                        </li>
+                        <li id="menuUserManageDivider" class="d-none"><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            <i class="bi bi-key"></i> 修改密码
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="logout()">
+                            <i class="bi bi-box-arrow-right"></i> 退出登录
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <!-- ===== 任务列表 Tab ===== -->
+    <div id="panelJobs" class="main-content">
+        <!-- 统计卡片 -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card total">
+                    <h3 id="totalJobs">0</h3>
+                    <p class="mb-0"><i class="bi bi-list-task"></i> 任务总数</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card running">
+                    <h3 id="runningJobs">0</h3>
+                    <p class="mb-0"><i class="bi bi-play-circle"></i> 正常</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card paused">
+                    <h3 id="pausedJobs">0</h3>
+                    <p class="mb-0"><i class="bi bi-pause-circle"></i> 已暂停</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card blocked">
+                    <h3 id="blockedJobs">0</h3>
+                    <p class="mb-0"><i class="bi bi-slash-circle"></i> 阻塞</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索区域 -->
+        <div class="search-box">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">任务名称</label>
+                    <input type="text" class="form-control" id="searchJobName" placeholder="输入任务名称">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">任务分组</label>
+                    <input type="text" class="form-control" id="searchJobGroup" placeholder="输入分组名称">
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-outline-secondary me-2" onclick="resetSearch()">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </button>
+                    <button class="btn btn-primary me-2" onclick="searchJobs()">
+                        <i class="bi bi-search"></i> 搜索
+                    </button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addJobModal">
+                        <i class="bi bi-plus-lg"></i> 新增任务
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 任务列表 -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-list-task"></i> 任务列表</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <!-- 自动刷新开关 -->
+                    <div class="d-flex align-items-center gap-1">
+                        <div class="form-check form-switch mb-0 me-1">
+                            <input class="form-check-input" type="checkbox" id="autoRefreshSwitch"
+                                   onchange="onAutoRefreshToggle()" style="cursor:pointer;">
+                            <label class="form-check-label text-muted small" for="autoRefreshSwitch">自动刷新</label>
+                        </div>
+                        <select class="form-select form-select-sm" id="autoRefreshInterval"
+                                style="width:90px;" onchange="onAutoRefreshToggle()" disabled>
+                            <option value="5">5 秒</option>
+                            <option value="10" selected>10 秒</option>
+                            <option value="30">30 秒</option>
+                            <option value="60">60 秒</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshJobs()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>任务名称</th>
+                                <th>分组</th>
+                                <th>状态</th>
+                                <th>触发方式</th>
+                                <th>上次计划时间</th>
+                                <th>下次计划时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 分页 -->
+                <nav aria-label="Page navigation" class="mt-3">
+                    <ul class="pagination justify-content-center" id="pagination">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+    </div><!-- /panelJobs -->
+
+    <!-- ===== 操作日志 Tab ===== -->
+    <div id="panelAudit" class="main-content d-none">
+        <div class="search-box">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">操作人</label>
+                    <input type="text" class="form-control" id="searchAuditOperator" placeholder="输入用户名">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">操作功能</label>
+                    <select class="form-select" id="searchAuditAction">
+                        <option value="">全部</option>
+                        <option value="用户登录">用户登录</option>
+                        <option value="新增任务">新增任务</option>
+                        <option value="修改任务">修改任务</option>
+                        <option value="删除任务">删除任务</option>
+                        <option value="暂停任务">暂停任务</option>
+                        <option value="恢复任务">恢复任务</option>
+                        <option value="立即执行">立即执行</option>
+                        <option value="新增用户">新增用户</option>
+                        <option value="删除用户">删除用户</option>
+                        <option value="新增推送配置">新增推送配置</option>
+                        <option value="修改推送配置">修改推送配置</option>
+                        <option value="删除推送配置">删除推送配置</option>
+                        <option value="测试推送配置">测试推送配置</option>
+                    </select>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-outline-secondary me-2" onclick="resetAuditSearch()">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </button>
+                    <button class="btn btn-primary" onclick="searchAuditLogs()">
+                        <i class="bi bi-search"></i> 搜索
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-journal-check"></i> 操作日志</h5>
+                <button class="btn btn-outline-primary btn-sm" onclick="loadAuditLogs()">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>操作时间</th>
+                                <th>操作人</th>
+                                <th>操作功能</th>
+                                <th>操作对象</th>
+                                <th>备注</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <tr><td colspan="5" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav class="mt-3">
+                    <ul class="pagination justify-content-center" id="auditPagination"></ul>
+                </nav>
+            </div>
+        </div>
+    </div><!-- /panelAudit -->
+
+    <!-- ===== 用户管理 Tab (Admin Only) ===== -->
+    <div id="panelUsers" class="main-content d-none">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people"></i> 用户管理</h5>
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="bi bi-person-plus"></i> 新增用户
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>用户名</th>
+                                <th>显示名称</th>
+                                <th>角色</th>
+                                <th>状态</th>
+                                <th>创建时间</th>
+                                <th>最后登录</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr><td colspan="7" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 用户分页 -->
+                <div class="d-flex justify-content-center mt-2 mb-1">
+                    <ul class="pagination pagination-sm mb-0" id="userPagination"></ul>
+                </div>
+            </div>
+        </div>
+    </div><!-- /panelUsers -->
+
+    <!-- ===== 推送配置 Tab (Admin Only) ===== -->
+    <div id="panelNotify" class="main-content d-none">
+        <div class="card" style="border-radius:15px;overflow:hidden;min-height:360px;">
+            <div class="d-flex" style="min-height:360px;">
+
+                <!-- 左侧竖向渠道菜单 -->
+                <div class="notify-side-nav d-flex flex-column py-3">
+                    <a href="#" class="nav-link active" id="notifyTab_DingTalk"
+                       onclick="switchNotifyTab('DingTalk');return false;">
+                        钉钉配置
+                    </a>
+                    <a href="#" class="nav-link" id="notifyTab_Email"
+                       onclick="switchNotifyTab('Email');return false;">
+                        邮件配置
+                    </a>
+                    <a href="#" class="nav-link" id="notifyTab_Feishu"
+                       onclick="switchNotifyTab('Feishu');return false;">
+                        飞书配置
+                    </a>
+                </div>
+
+                <!-- 右侧配置区域 -->
+                <div class="flex-grow-1 p-5">
+                    <input type="hidden" id="notifyCurrentChannel" value="DingTalk">
+
+                    <!-- 加载中 -->
+                    <div id="notifyFormLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+
+                    <!-- 内容区 -->
+                    <div id="notifyFormArea" class="d-none">
+
+                        <!-- ── 钉钉（可用） ── -->
+                        <div id="notifyForm_DingTalk" class="notify-channel-form">
+                            <div class="mb-4 row align-items-center">
+                                <div class="col-3 notify-form-label">Webhook 连接：</div>
+                                <div class="col-9">
+                                    <input type="text" class="form-control" id="dt_webhookUrl"
+                                           placeholder="如：https://oapi.dingtalk.com/robot/send?access_token=xxx">
+                                </div>
+                            </div>
+                            <div class="mb-4 row align-items-center">
+                                <div class="col-3 notify-form-label">加签密钥：</div>
+                                <div class="col-9">
+                                    <input type="password" class="form-control" id="dt_secret"
+                                           placeholder="如：SEC...（只支持加签推送）" autocomplete="new-password">
+                                </div>
+                            </div>
+                            <!-- 底部按钮 -->
+                            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                                <button class="btn btn-outline-secondary" onclick="testNotifyInline()">
+                                    <i class="bi bi-send"></i> 测试
+                                </button>
+                                <button class="btn btn-primary px-4" onclick="saveNotifyInline()">
+                                    确定
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ── 飞书（暂未实现） ── -->
+                        <div id="notifyForm_Feishu" class="notify-channel-form d-none">
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-tools" style="font-size:3rem;opacity:.3;"></i>
+                                <p class="mt-3 mb-0 fs-6">飞书机器人推送暂未实现，敬请期待</p>
+                            </div>
+                        </div>
+
+                        <!-- ── 邮件（SMTP） ── -->
+                        <div id="notifyForm_Email" class="notify-channel-form d-none">
+                            <div class="mb-4 row align-items-center">
+                                <div class="col-3 notify-form-label">SMTP 服务器：</div>
+                                <div class="col-9">
+                                    <input type="text" class="form-control" id="email_smtpHost"
+                                           placeholder="如：smtp.163.com / smtp.qq.com / smtp.gmail.com">
+                                </div>
+                            </div>
+                            <div class="mb-4 row align-items-center">
+                                <div class="col-3 notify-form-label">端口：</div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control" id="email_smtpPort" value="465" min="1" max="65535">
+                                </div>
+                                <div class="col-5 d-flex align-items-center gap-3 ps-3">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="email_useSsl" checked>
+                                        <label class="form-check-label" for="email_useSsl">SSL 加密</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-4 row align-items-center">
+                                <div class="col-3 notify-form-label">发件人账号：</div>
+                                <div class="col-9">
+                                    <input type="email" class="form-control" id="email_username"
+                                           placeholder="如：your@163.com">
+                                </div>
+                            </div>
+                            <div class="mb-4 row align-items-center">
+                                <div class="col-3 notify-form-label">授权码/密码：</div>
+                                <div class="col-9">
+                                    <input type="password" class="form-control" id="email_password"
+                                           placeholder="邮箱授权码（非登录密码）">
+                                </div>
+                            </div>
+                            <div class="mb-4 row align-items-center">
+                                <div class="col-3 notify-form-label">发件人名称：</div>
+                                <div class="col-9">
+                                    <input type="text" class="form-control" id="email_fromName"
+                                           placeholder="如：DotJob 调度系统（可选）">
+                                </div>
+                            </div>
+                            <div class="mb-4 row align-items-center">
+                                <div class="col-3 notify-form-label">收件人：</div>
+                                <div class="col-9">
+                                    <input type="text" class="form-control" id="email_to"
+                                           placeholder="多个收件人用英文逗号分隔，如：a@x.com,b@x.com">
+                                </div>
+                            </div>
+                            <!-- 底部按钮 -->
+                            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                                <button class="btn btn-outline-secondary" onclick="testNotifyInline()">
+                                    <i class="bi bi-send"></i> 测试
+                                </button>
+                                <button class="btn btn-primary px-4" onclick="saveNotifyInline()">
+                                    确定
+                                </button>
+                            </div>
+                        </div>
+
+                    </div><!-- /notifyFormArea -->
+                </div><!-- /right -->
+            </div><!-- /flex -->
+        </div><!-- /card -->
+    </div><!-- /panelNotify -->
+
+    <!-- 新增用户模态框 -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="modal-title"><i class="bi bi-person-plus"></i> 新增用户</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label class="form-label">用户名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="newUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密码 <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="newUserPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">显示名称</label>
+                            <input type="text" class="form-control" id="newDisplayName">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="newEmail">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">角色</label>
+                            <select class="form-select" id="newRole">
+                                <option value="User" selected>普通用户</option>
+                                <option value="Admin">管理员</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAddUser()">
+                        <i class="bi bi-check-lg"></i> 确定添加
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增推送配置模态框 -->
+    <div class="modal fade" id="addNotifyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="modal-title"><i class="bi bi-bell-plus"></i> 新增推送配置</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addNotifyForm">
+                        <div class="mb-3">
+                            <label class="form-label">配置名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="notifyName" placeholder="如：研发群钉钉机器人" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">渠道类型 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="notifyChannel" onchange="onNotifyChannelChange('add')">
+                                <option value="DingTalk">钉钉机器人</option>
+                                <option value="Feishu">飞书机器人</option>
+                                <option value="Email">邮件</option>
+                            </select>
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label">渠道配置 (JSON) <span class="text-danger">*</span></label>
+                            <textarea class="form-control font-monospace" id="notifyConfig" rows="6" spellcheck="false"></textarea>
+                            <div class="form-text text-muted" id="notifyConfigHint"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAddNotify()">
+                        <i class="bi bi-check-lg"></i> 确定添加
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑推送配置模态框 -->
+    <div class="modal fade" id="editNotifyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square"></i> 编辑推送配置</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editNotifyId">
+                    <form id="editNotifyForm">
+                        <div class="mb-3">
+                            <label class="form-label">配置名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editNotifyName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">渠道类型</label>
+                            <select class="form-select" id="editNotifyChannel" onchange="onNotifyChannelChange('edit')">
+                                <option value="DingTalk">钉钉机器人</option>
+                                <option value="Feishu">飞书机器人</option>
+                                <option value="Email">邮件</option>
+                            </select>
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label">渠道配置 (JSON) <span class="text-danger">*</span></label>
+                            <textarea class="form-control font-monospace" id="editNotifyConfig" rows="6" spellcheck="false"></textarea>
+                            <div class="form-text text-muted" id="editNotifyConfigHint"></div>
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="editNotifyEnabled" checked>
+                                <label class="form-check-label" for="editNotifyEnabled">启用</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitEditNotify()">
+                        <i class="bi bi-check-lg"></i> 保存修改
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增任务模态框 -->
+    <div class="modal fade" id="addJobModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> 新增定时任务</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addJobForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">任务名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="jobName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">任务分组 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="jobGroup" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">触发器类型</label>
+                                <select class="form-select" id="triggerType" onchange="toggleTriggerOptions()">
+                                    <option value="1">Cron 表达式</option>
+                                    <option value="2">固定间隔</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3" id="cronGroup">
+                                <label class="form-label">Cron 表达式 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="cron" placeholder="例如: 0 0/5 * * * ?">
+                            </div>
+                            <div class="col-md-6 mb-3 d-none" id="intervalGroup">
+                                <label class="form-label">间隔时间（秒）</label>
+                                <input type="number" class="form-control" id="intervalSecond" value="60" min="1">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">请求方法</label>
+                                <select class="form-select" id="requestType">
+                                    <option value="1">GET</option>
+                                    <option value="2" selected>POST</option>
+                                    <option value="4">PUT</option>
+                                    <option value="8">DELETE</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">执行次数</label>
+                                <input type="number" class="form-control" id="runTotal" placeholder="留空为无限循环">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">请求 URL <span class="text-danger">*</span></label>
+                            <input type="url" class="form-control" id="requestUrl" placeholder="https://example.com/api" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Headers (JSON 格式)</label>
+                            <textarea class="form-control" id="headers" rows="2" placeholder='{"Authorization": "Bearer xxx"}'></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">请求参数 (JSON 格式)</label>
+                            <textarea class="form-control" id="requestParameters" rows="3" placeholder='{"key": "value"}'></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">任务描述</label>
+                            <textarea class="form-control" id="description" rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">开始时间</label>
+                                <input type="datetime-local" class="form-control" id="beginTime">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">结束时间</label>
+                                <input type="datetime-local" class="form-control" id="endTime">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">钉钉通知</label>
+                                <select class="form-select" id="dingTalkNotice">
+                                    <option value="0" selected>不通知</option>
+                                    <option value="1">错误通知</option>
+                                    <option value="2">每次都通知</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">邮件通知</label>
+                                <select class="form-select" id="mailNotice">
+                                    <option value="0" selected>不通知</option>
+                                    <option value="1">错误通知</option>
+                                    <option value="2">每次都通知</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitAddJob" onclick="submitAddJob()">
+                        <i class="bi bi-check-lg"></i> 确定添加
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 任务详情/编辑模态框 -->
+    <div class="modal fade" id="jobDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square"></i> 任务详情</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editJobForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">任务名称</label>
+                                <input type="text" class="form-control bg-light" id="editJobName" data-readonly readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">任务分组</label>
+                                <input type="text" class="form-control bg-light" id="editJobGroup" data-readonly readonly>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">触发器类型</label>
+                                <select class="form-select" id="editTriggerType" onchange="toggleEditTriggerOptions()">
+                                    <option value="1">Cron 表达式</option>
+                                    <option value="2">固定间隔</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3" id="editCronGroup">
+                                <label class="form-label">Cron 表达式 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editCron" placeholder="例如: 0 0/5 * * * ?">
+                            </div>
+                            <div class="col-md-6 mb-3 d-none" id="editIntervalGroup">
+                                <label class="form-label">间隔时间（秒）</label>
+                                <input type="number" class="form-control" id="editIntervalSecond" value="60" min="1">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">请求方法</label>
+                                <select class="form-select" id="editRequestType">
+                                    <option value="1">GET</option>
+                                    <option value="2">POST</option>
+                                    <option value="4">PUT</option>
+                                    <option value="8">DELETE</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">执行次数</label>
+                                <input type="number" class="form-control" id="editRunTotal" placeholder="留空为无限循环">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">请求 URL <span class="text-danger">*</span></label>
+                            <input type="url" class="form-control" id="editRequestUrl" placeholder="https://example.com/api">                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Headers (JSON 格式)</label>
+                            <textarea class="form-control" id="editHeaders" rows="2" placeholder='{"Authorization": "Bearer xxx"}'></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">请求参数 (JSON 格式)</label>
+                            <textarea class="form-control" id="editRequestParameters" rows="3" placeholder='{"key": "value"}'></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">任务描述</label>
+                            <textarea class="form-control" id="editDescription" rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">开始时间</label>
+                                <input type="datetime-local" class="form-control" id="editBeginTime">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">结束时间</label>
+                                <input type="datetime-local" class="form-control" id="editEndTime">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">钉钉通知</label>
+                                <select class="form-select" id="editDingTalkNotice">
+                                    <option value="0">不通知</option>
+                                    <option value="1">错误通知</option>
+                                    <option value="2">每次都通知</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">邮件通知</label>
+                                <select class="form-select" id="editMailNotice">
+                                    <option value="0">不通知</option>
+                                    <option value="1">错误通知</option>
+                                    <option value="2">每次都通知</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-info" onclick="viewJobLogs()">
+                        <i class="bi bi-journal-text"></i> 查看日志
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitEditJob" onclick="submitEditJob()">
+                        <i class="bi bi-check-lg"></i> 保存修改
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 任务日志模态框 -->
+    <div class="modal fade" id="jobLogsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="modal-title"><i class="bi bi-journal-text"></i> 执行日志 - <span id="logJobTitle"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>开始时间</th>
+                                    <th>结束时间</th>
+                                    <th>耗时(秒)</th>
+                                    <th>状态</th>
+                                    <th>状态码</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm justify-content-center" id="logPagination">
+                        </ul>
+                    </nav>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" onclick="refreshLogs()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日志详情模态框 -->
+    <div class="modal fade" id="logDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-file-text"></i> 日志详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="logDetailContent">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 备注详情模态框 -->
+    <div class="modal fade" id="remarkDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-file-code"></i> 修改详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <pre id="remarkJsonContent" class="bg-light p-3 rounded" style="max-height: 500px; overflow: auto; font-size: 0.85rem; white-space: pre-wrap; word-break: break-all;"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码模态框 -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-key"></i> 修改密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label class="form-label">原密码</label>
+                            <input type="password" class="form-control" id="oldPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="changePassword()">确认修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js?v=20260228e"></script>
+    <!-- 自定义轻量 Tooltip -->
+    <div id="customTooltip"></div>
+</body>
+</html>

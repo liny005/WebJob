@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - DotJob 任务调度平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 400px;
+            width: 100%;
+        }
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .login-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .login-header p {
+            opacity: 0.9;
+            margin: 0;
+        }
+        .login-body {
+            padding: 40px 30px;
+        }
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        .input-group-text {
+            border-radius: 10px 0 0 10px;
+            border: 2px solid #e1e1e1;
+            border-right: none;
+            background: #f8f9fa;
+        }
+        .input-group .form-control {
+            border-radius: 0 10px 10px 0;
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        .alert {
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <h1><i class="bi bi-clock-history"></i> DotJob</h1>
+            <p>WebJob调度管理平台</p>
+        </div>
+        <div class="login-body">
+            <div id="alertBox" class="alert alert-danger d-none" role="alert"></div>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">用户名</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="请输入用户名" required autofocus>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">密码</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="请输入密码" required>
+                    </div>
+                </div>
+                <div class="mb-4 form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe">记住登录状态</label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-login w-100" id="btnLogin">
+                    <i class="bi bi-box-arrow-in-right"></i> 登 录
+                </button>
+            </form>
+            <div class="text-center mt-4 text-muted small">
+                <p>默认账户: admin / admin123</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const alertBox = document.getElementById('alertBox');
+            const btnLogin = document.getElementById('btnLogin');
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            // 显示加载状态
+            btnLogin.disabled = true;
+            btnLogin.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> 登录中...';
+            alertBox.classList.add('d-none');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password, rememberMe })
+                });
+                
+                const result = await response.json();
+                
+                // 登录成功: code === 0，data 中包含 userId
+                if (result.code === 0 && result.data && result.data.userId) {
+                    // 登录成功，跳转到主页
+                    window.location.href = '/index.html';
+                } else {
+                    // 显示错误信息（登录失败时 message 在顶层）
+                    const errorMsg = result.message || '登录失败，请重试';
+                    alertBox.textContent = errorMsg;
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (error) {
+                alertBox.textContent = '网络错误，请检查网络连接';
+                alertBox.classList.remove('d-none');
+            } finally {
+                btnLogin.disabled = false;
+                btnLogin.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> 登 录';
+            }
+        });
+
+        // 检查是否已登录
+        fetch('/api/auth/current')
+            .then(res => res.json())
+            .then(data => {
+                // API 返回格式: { code: 0, message: "成功", data: { userId: xxx, ... } }
+                if (data.data && data.data.userId) {
+                    window.location.href = '/index.html';
+                }
+            })
+            .catch(() => {});
+    </script>
+</body>
+</html>
