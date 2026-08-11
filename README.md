@@ -208,12 +208,12 @@ docker run -d ... ghcr.io/liny005/webjob:1.0.0
 git clone https://github.com/liny005/WebJob.git
 cd WebJob
 
-docker build -t dotjob:latest .
+docker build -f DotJob_Scheduler/Dockerfile -t dotjob:latest .
 
 docker run -d \
   --name dotjob \
   -p 8080:8080 \
-  -e "ConnectionStrings__MysqlConnection=Server=<host>;Port=3306;..." \
+  -e "ConnectionStrings__MysqlConnection=Server=<host>;Port=3306;Uid=<user>;******;Database=job;Charset=utf8mb4;Min Pool Size=5;Max Pool Size=100;Connection Timeout=30;Default Command Timeout=30" \
   dotjob:latest
 ```
 
@@ -233,7 +233,8 @@ docker run -d \
 
 ```
 DotJob/
-├── Dockerfile                          # 多阶段构建（SDK build → ASP.NET Runtime）
+├── DotJob_Scheduler/
+│   └── Dockerfile                      # 多阶段构建（SDK build → ASP.NET Runtime）
 ├── .dockerignore                       # 排除 bin/obj/.git 等无关文件
 ├── .github/workflows/docker-publish.yml  # CI：push main/tag 自动构建并推送镜像
 └── scripts/
