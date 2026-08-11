@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
 using DotJob_Model.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Job_Scheduler.Application.User;
 using Microsoft.AspNetCore.Authorization;
 

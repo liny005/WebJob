@@ -29,14 +29,20 @@ public class JobScheduleController : ControllerBase
     /// <summary>
     /// 查询任务列表（服务端分页）
     /// </summary>
+    /// <param name="jobName">可选：按任务名模糊筛选</param>
+    /// <param name="jobGroup">可选：按任务分组模糊筛选</param>
+    /// <param name="pageNumber">页码（从1开始）</param>
+    /// <param name="pageSize">每页数量</param>
+    /// <param name="triggerState">可选：按触发器状态筛选（1=正常，2=暂停，3=完成，4=错误，5=阻塞），不传则返回全部状态</param>
     [HttpGet("list")]
     public async Task<PageResponse<JobListInfo>> QueryJobListAsync(
         [FromQuery] string? jobName = null,
         [FromQuery] string? jobGroup = null,
         [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 20,
+        [FromQuery] int? triggerState = null)
     {
-        return await _schedulerCenterServices.QueryJobAsync(jobName, jobGroup, pageNumber, pageSize);
+        return await _schedulerCenterServices.QueryJobAsync(jobName, jobGroup, pageNumber, pageSize, triggerState);
     }
 
     /// <summary>

@@ -10,9 +10,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJob_Tests", "DotJob_Test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 	ProjectSection(SolutionItems) = preProject
-		.dockerignore = .dockerignore
 		.github\workflows\docker-publish.yml = .github\workflows\docker-publish.yml
-		Dockerfile = Dockerfile
 		README.md = README.md
 	EndProjectSection
 EndProject

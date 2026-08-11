@@ -161,9 +161,9 @@ public class TestableSchedulerCenterServices : SchedulerCenterServices
     /// </summary>
     public override async Task<PageResponse<JobListInfo>> QueryJobAsync(
         string? jobName = null, string? jobGroup = null,
-        int pageNumber = 1, int pageSize = 20)
+        int pageNumber = 1, int pageSize = 20, int? triggerState = null)
     {
-        var all = await GetAllJobsInternalAsync(jobName, jobGroup);
+        var all = await GetAllJobsInternalAsync(jobName, jobGroup, triggerState);
         var total = all.Count;
         var paged = all.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
         return new PageResponse<JobListInfo>
@@ -177,16 +177,16 @@ public class TestableSchedulerCenterServices : SchedulerCenterServices
     /// 覆盖：返回全量任务列表（不分页），用于测试中的统计/断言。
     /// </summary>
     public override async Task<List<JobListInfo>> QueryAllJobsAsync(
-        string? jobName = null, string? jobGroup = null)
+        string? jobName = null, string? jobGroup = null, int? triggerState = null)
     {
-        return await GetAllJobsInternalAsync(jobName, jobGroup);
+        return await GetAllJobsInternalAsync(jobName, jobGroup, triggerState);
     }
 
     /// <summary>
     /// 内部：从内存调度器读取所有任务（不分页）
     /// </summary>
     private async Task<List<JobListInfo>> GetAllJobsInternalAsync(
-        string? jobName = null, string? jobGroup = null)
+        string? jobName = null, string? jobGroup = null, int? triggerState = null)
     {
         var scheduler  = await GetSchedulerAsync();
         var groupNames = await scheduler.GetJobGroupNames();
@@ -222,6 +222,10 @@ public class TestableSchedulerCenterServices : SchedulerCenterServices
                     TriggerState.Blocked  => 5,
                     _                     => 0,
                 };
+
+                // 按触发器状态筛选
+                if (triggerState.HasValue && stateInt != triggerState.Value)
+                    continue;
 
                 _configStore.TryGetValue($"{group}::{key.Name}", out var cfg);
 

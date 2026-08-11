@@ -16,7 +16,7 @@ let auditCurrentPage = 1;
 let auditPageSize = 20;
 
 // 当前生效的搜索条件（只有用户点击"搜索"按钮才更新）
-let activeFilter = { jobName: '', jobGroup: '' };
+let activeFilter = { jobName: '', jobGroup: '', triggerState: '' };
 
 // 页面加载初始化
 document.addEventListener('DOMContentLoaded', function() {
@@ -206,6 +206,7 @@ async function loadJobs() {
         });
         if (activeFilter.jobName)  params.set('jobName',  activeFilter.jobName);
         if (activeFilter.jobGroup) params.set('jobGroup', activeFilter.jobGroup);
+        if (activeFilter.triggerState) params.set('triggerState', activeFilter.triggerState);
 
         const response = await fetch(`/api/job/list?${params}`);
         const result = await response.json();
@@ -570,7 +571,8 @@ function goToPage(page) {
 function searchJobs() {
     activeFilter = {
         jobName:  (document.getElementById('searchJobName').value  || '').trim(),
-        jobGroup: (document.getElementById('searchJobGroup').value || '').trim()
+        jobGroup: (document.getElementById('searchJobGroup').value || '').trim(),
+        triggerState: document.getElementById('searchTriggerState').value || ''
     };
     currentPage = 1;
     loadJobs();
@@ -580,7 +582,8 @@ function searchJobs() {
 function resetSearch() {
     document.getElementById('searchJobName').value  = '';
     document.getElementById('searchJobGroup').value = '';
-    activeFilter = { jobName: '', jobGroup: '' };
+    document.getElementById('searchTriggerState').value = '';
+    activeFilter = { jobName: '', jobGroup: '', triggerState: '' };
     currentPage = 1;
     loadJobs();
 }

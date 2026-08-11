@@ -57,14 +57,30 @@ public class SchedulerCenterServices
     /// <param name="jobGroup">可选：按任务分组模糊筛选</param>
     /// <param name="pageNumber">页码（从1开始），默认 1</param>
     /// <param name="pageSize">每页数量，默认 20</param>
+    /// <param name="triggerState">
+    /// 可选：按触发器状态筛选（1=正常 Normal，2=暂停 Paused，3=完成 Complete，4=错误 Error，5=阻塞 Blocked）。
+    /// 不传则不筛选状态，返回全部。
+    /// </param>
     /// <returns>分页的任务列表信息</returns>
     public virtual async Task<PageResponse<JobListInfo>> QueryJobAsync(
         string? jobName = null,
         string? jobGroup = null,
         int pageNumber = 1,
-        int pageSize = 20)
+        int pageSize = 20,
+        int? triggerState = null)
     {
         await GetSchedulerAsync();
+
+        // 触发器状态编码 -> Quartz QRTZ_TRIGGERS.TRIGGER_STATE 字符串集合的映射
+        var triggerStateDbValues = triggerState switch
+        {
+            1 => new[] { "WAITING", "ACQUIRED", "EXECUTING" },
+            2 => new[] { "PAUSED" },
+            3 => new[] { "COMPLETE" },
+            4 => new[] { "ERROR" },
+            5 => new[] { "BLOCKED" },
+            _ => null
+        };
 
         var whereClauses = new List<string>
         {
@@ -74,17 +90,32 @@ public class SchedulerCenterServices
         };
         if (!string.IsNullOrWhiteSpace(jobName))  whereClauses.Add("t.JOB_NAME  COLLATE utf8mb4_unicode_ci LIKE @jobName");
         if (!string.IsNullOrWhiteSpace(jobGroup)) whereClauses.Add("t.JOB_GROUP COLLATE utf8mb4_unicode_ci LIKE @jobGroup");
+        if (triggerStateDbValues != null)
+        {
+            var stateParams = string.Join(", ", triggerStateDbValues.Select((_, idx) => $"@state{idx}"));
+            whereClauses.Add($"t.TRIGGER_STATE IN ({stateParams})");
+        }
         var where = string.Join(" AND ", whereClauses);
 
         await using var conn = new MySqlConnection(AppConfig.ConnectionString);
         await conn.OpenAsync();
 
+        void AddCommonParameters(MySqlCommand command)
+        {
+            command.Parameters.AddWithValue("@schedName", AppConfig.SchedulerName);
+            if (!string.IsNullOrWhiteSpace(jobName))  command.Parameters.AddWithValue("@jobName",  $"%{jobName}%");
+            if (!string.IsNullOrWhiteSpace(jobGroup)) command.Parameters.AddWithValue("@jobGroup", $"%{jobGroup}%");
+            if (triggerStateDbValues != null)
+            {
+                for (var idx = 0; idx < triggerStateDbValues.Length; idx++)
+                    command.Parameters.AddWithValue($"@state{idx}", triggerStateDbValues[idx]);
+            }
+        }
+
         // 查询总数
         await using var countCmd = conn.CreateCommand();
         countCmd.CommandText = $"SELECT COUNT(*) FROM QRTZ_TRIGGERS t WHERE {where}";
-        countCmd.Parameters.AddWithValue("@schedName", AppConfig.SchedulerName);
-        if (!string.IsNullOrWhiteSpace(jobName))  countCmd.Parameters.AddWithValue("@jobName",  $"%{jobName}%");
-        if (!string.IsNullOrWhiteSpace(jobGroup)) countCmd.Parameters.AddWithValue("@jobGroup", $"%{jobGroup}%");
+        AddCommonParameters(countCmd);
         var total = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
 
         // 查询分页数据，JOIN JOB_CONFIG 获取触发类型信息
@@ -99,9 +130,7 @@ LEFT JOIN JOB_CONFIG c
 WHERE {where}
 ORDER BY t.JOB_GROUP, t.JOB_NAME
 LIMIT @offset, @size";
-        cmd.Parameters.AddWithValue("@schedName", AppConfig.SchedulerName);
-        if (!string.IsNullOrWhiteSpace(jobName))  cmd.Parameters.AddWithValue("@jobName",  $"%{jobName}%");
-        if (!string.IsNullOrWhiteSpace(jobGroup)) cmd.Parameters.AddWithValue("@jobGroup", $"%{jobGroup}%");
+        AddCommonParameters(cmd);
         cmd.Parameters.AddWithValue("@offset", (pageNumber - 1) * pageSize);
         cmd.Parameters.AddWithValue("@size",   pageSize);
 
@@ -153,10 +182,11 @@ LIMIT @offset, @size";
     /// </summary>
     /// <param name="jobName">可选：按任务名模糊筛选</param>
     /// <param name="jobGroup">可选：按任务分组模糊筛选</param>
+    /// <param name="triggerState">可选：按触发器状态筛选（1=正常，2=暂停，3=完成，4=错误，5=阻塞）</param>
     /// <returns>任务列表信息集合</returns>
-    public virtual async Task<List<JobListInfo>> QueryAllJobsAsync(string? jobName = null, string? jobGroup = null)
+    public virtual async Task<List<JobListInfo>> QueryAllJobsAsync(string? jobName = null, string? jobGroup = null, int? triggerState = null)
     {
-        var response = await QueryJobAsync(jobName, jobGroup, 1, int.MaxValue);
+        var response = await QueryJobAsync(jobName, jobGroup, 1, int.MaxValue, triggerState);
         return response.Data;
     }
     
