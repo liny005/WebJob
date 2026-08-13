@@ -1991,7 +1991,6 @@ async function refreshMonitor() {
 function updateMonitorUI(data) {
     const system = data.system;
     const jobLatency = data.jobLatency;
-    const jobStats = data.jobStats;
 
     // CPU 和内存摘要
     document.getElementById('cpuUsage').textContent = system.cpu.usagePercent + '%';
@@ -2010,12 +2009,6 @@ function updateMonitorUI(data) {
     document.getElementById('jobMaxLatency').textContent = jobLatency.maxLatencyMs + ' ms';
     document.getElementById('jobMinLatency').textContent = jobLatency.minLatencyMs + ' ms';
     document.getElementById('jobExecutions').textContent = jobLatency.totalExecutions;
-
-    // 任务状态分布
-    document.getElementById('totalJobsMonitor').textContent = jobStats.total;
-    document.getElementById('normalJobsMonitor').textContent = jobStats.normal;
-    document.getElementById('pausedJobsMonitor').textContent = jobStats.paused;
-    document.getElementById('blockedJobsMonitor').textContent = jobStats.blocked;
 }
 
 function updateLastUpdateTime() {

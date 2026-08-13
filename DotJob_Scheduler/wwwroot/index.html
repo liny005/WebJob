@@ -672,8 +672,8 @@
                     <div class="card-header">
                         <h5 class="mb-0"><i class="bi bi-cpu"></i> CPU 使用率趋势</h5>
                     </div>
-                    <div class="card-body">
-                        <canvas id="cpuChart" height="80"></canvas>
+                    <div class="card-body" style="height: 300px;">
+                        <canvas id="cpuChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -684,8 +684,8 @@
                     <div class="card-header">
                         <h5 class="mb-0"><i class="bi bi-memory"></i> 内存占用趋势</h5>
                     </div>
-                    <div class="card-body">
-                        <canvas id="memoryChart" height="80"></canvas>
+                    <div class="card-body" style="height: 300px;">
+                        <canvas id="memoryChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -699,8 +699,8 @@
                     <div class="card-header">
                         <h5 class="mb-0"><i class="bi bi-diagram-3"></i> 活跃线程趋势</h5>
                     </div>
-                    <div class="card-body">
-                        <canvas id="threadChart" height="80"></canvas>
+                    <div class="card-body" style="height: 300px;">
+                        <canvas id="threadChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -711,8 +711,8 @@
                     <div class="card-header">
                         <h5 class="mb-0"><i class="bi bi-hourglass-split"></i> 平均延迟趋势</h5>
                     </div>
-                    <div class="card-body">
-                        <canvas id="latencyChart" height="80"></canvas>
+                    <div class="card-body" style="height: 300px;">
+                        <canvas id="latencyChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -776,45 +776,6 @@
                             <div class="col-6">
                                 <p class="text-muted small mb-1">执行总数</p>
                                 <h5 id="jobExecutions">--</h5>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 任务状态统计 -->
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-bar-chart"></i> 任务状态分布</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="text-center py-3">
-                                    <h6 class="text-muted">总任务数</h6>
-                                    <h3 id="totalJobsMonitor" class="text-primary">--</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="text-center py-3">
-                                    <h6 class="text-muted">正常</h6>
-                                    <h3 id="normalJobsMonitor" style="color: #38ef7d;">--</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="text-center py-3">
-                                    <h6 class="text-muted">暂停</h6>
-                                    <h3 id="pausedJobsMonitor" style="color: #f5576c;">--</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="text-center py-3">
-                                    <h6 class="text-muted">阻塞</h6>
-                                    <h3 id="blockedJobsMonitor" style="color: #999;">--</h3>
-                                </div>
                             </div>
                         </div>
                     </div>
