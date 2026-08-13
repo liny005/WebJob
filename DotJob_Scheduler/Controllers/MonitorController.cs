@@ -1,5 +1,6 @@
 using Job_Scheduler.Application.Jobs;
 using Microsoft.AspNetCore.Mvc;
+using MySql.Data.MySqlClient;
 using System.Diagnostics;
 
 namespace Job_Scheduler.Controllers;
@@ -65,23 +66,18 @@ public class MonitorController : ControllerBase
             Timestamp = DateTime.UtcNow,
             Cpu = new
             {
-                UsagePercent = cpuUsagePercent,
-                ProcessorCount = Environment.ProcessorCount
+                UsagePercent = cpuUsagePercent
             },
             Memory = new
             {
                 TotalManagedMemoryMb = managedMemory,
                 WorkingSetMb = workingSet,
                 HeapSizeMb = GC.GetTotalMemory(false) / (1024 * 1024),
-                Gen0CollectionCount = GC.CollectionCount(0),
-                Gen1CollectionCount = GC.CollectionCount(1),
                 Gen2CollectionCount = GC.CollectionCount(2)
             },
             ThreadPool = new
             {
-                WorkerThreadCount = threadCount.WorkerThreadCount,
-                IOThreadCount = threadCount.IOThreadCount,
-                PendingWorkItemCount = threadCount.PendingWorkItemCount
+                WorkerThreadCount = threadCount.WorkerThreadCount
             }
         };
     }
@@ -92,54 +88,35 @@ public class MonitorController : ControllerBase
     [HttpGet("job-latency")]
     public async Task<object> GetJobLatencyAsync()
     {
-        var jobs = await _schedulerCenterServices.QueryAllJobsAsync();
+        await using var conn = new MySqlConnection(AppConfig.ConnectionString);
+        await conn.OpenAsync();
 
-        if (jobs.Count == 0)
-        {
-            return new
-            {
-                TotalJobs = 0,
-                AverageLatencyMs = 0,
-                MaxLatencyMs = 0,
-                MinLatencyMs = 0,
-                TotalExecutions = 0,
-                LatencyByState = new object[]{ }
-            };
-        }
+        // 直接查询最近的日志记录，计算延迟统计
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT EXECUTE_TIME FROM JOB_LOG
+                            WHERE EXECUTE_TIME > 0
+                            ORDER BY BEGIN_TIME DESC
+                            LIMIT 1000";
 
+        await using var reader = await cmd.ExecuteReaderAsync();
         var latencies = new List<long>();
-        foreach (var job in jobs)
+
+        while (await reader.ReadAsync())
         {
-            try
+            var executeTime = reader.GetDouble(0);
+            var durationMs = (long)(executeTime * 1000);
+            if (durationMs > 0)
             {
-                var jobLogs = await _schedulerCenterServices.QueryJobLogsAsync(job.Name, job.GroupName, 1, 100);
-                foreach (var log in jobLogs.Data)
-                {
-                    // ExecuteTime 是以秒为单位，转换为毫秒
-                    var durationMs = (long)(log.ExecuteTime * 1000);
-                    if (durationMs > 0)
-                    {
-                        latencies.Add(durationMs);
-                    }
-                }
+                latencies.Add(durationMs);
             }
-            catch { }
         }
 
         return new
         {
-            TotalJobs = jobs.Count,
-            ExecutedJobs = latencies.Count > 0 ? Math.Min(jobs.Count, 100) : 0,
             AverageLatencyMs = latencies.Count > 0 ? (long)Math.Round(latencies.Average()) : 0L,
             MaxLatencyMs = latencies.Count > 0 ? latencies.Max() : 0L,
             MinLatencyMs = latencies.Count > 0 ? latencies.Min() : 0L,
-            TotalExecutions = latencies.Count,
-            LatencyByState = new
-            {
-                Normal = jobs.Count(j => j.TriggerState == 1),
-                Paused = jobs.Count(j => j.TriggerState == 2),
-                Blocked = jobs.Count(j => j.TriggerState == 5)
-            }
+            TotalExecutions = latencies.Count
         };
     }
 
