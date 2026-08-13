@@ -1999,20 +1999,11 @@ function updateMonitorUI(data) {
     document.getElementById('threadCount').textContent = system.threadPool.workerThreadCount;
     document.getElementById('avgLatency').textContent = jobLatency.averageLatencyMs.toFixed(0) + ' ms';
 
-    // CPU 详细信息
-    document.getElementById('cpuUsagePercent').textContent = system.cpu.usagePercent + ' %';
-    document.getElementById('processorCount').textContent = system.cpu.processorCount;
-
     // 内存详细信息
     document.getElementById('managedMemory').textContent = system.memory.totalManagedMemoryMb + ' MB';
     document.getElementById('workingSet').textContent = system.memory.workingSetMb + ' MB';
     document.getElementById('heapSize').textContent = system.memory.heapSizeMb + ' MB';
     document.getElementById('gen2Collections').textContent = system.memory.gen2CollectionCount;
-
-    // 线程池信息
-    document.getElementById('workerThreadCount').textContent = system.threadPool.workerThreadCount;
-    document.getElementById('ioThreadCount').textContent = system.threadPool.ioThreadCount;
-    document.getElementById('pendingWorkItems').textContent = system.threadPool.pendingWorkItemCount;
 
     // 任务延迟统计
     document.getElementById('jobAvgLatency').textContent = jobLatency.averageLatencyMs.toFixed(0) + ' ms';

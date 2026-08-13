@@ -720,27 +720,6 @@
 
         <!-- 详细监控数据 -->
         <div class="row mt-4">
-            <!-- CPU 和内存详情 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-cpu"></i> CPU 信息</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">CPU 使用率</p>
-                                <h5 id="cpuUsagePercent">-- %</h5>
-                            </div>
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">处理器核心数</p>
-                                <h5 id="processorCount">--</h5>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- 内存详情 -->
             <div class="col-md-6">
                 <div class="card">
@@ -766,36 +745,6 @@
                             <div class="col-6">
                                 <p class="text-muted small mb-1">GC 回收次数 (Gen2)</p>
                                 <h5 id="gen2Collections">--</h5>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 线程池和任务信息 -->
-        <div class="row mt-4">
-            <!-- 线程池详情 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-diagram-3"></i> 线程池状态</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">工作线程</p>
-                                <h5 id="workerThreadCount">--</h5>
-                            </div>
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">I/O 线程</p>
-                                <h5 id="ioThreadCount">--</h5>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12">
-                                <p class="text-muted small mb-1">待处理工作项</p>
-                                <h5 id="pendingWorkItems">--</h5>
                             </div>
                         </div>
                     </div>
