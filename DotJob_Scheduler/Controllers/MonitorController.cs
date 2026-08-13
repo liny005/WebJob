@@ -5,6 +5,18 @@ using System.Diagnostics;
 namespace Job_Scheduler.Controllers;
 
 /// <summary>
+/// 监控数据历史记录
+/// </summary>
+public class MonitorMetric
+{
+    public DateTime Timestamp { get; set; }
+    public double CpuUsagePercent { get; set; }
+    public long MemoryMb { get; set; }
+    public int WorkerThreadCount { get; set; }
+    public long AverageLatencyMs { get; set; }
+}
+
+/// <summary>
 /// 系统监控控制器
 /// </summary>
 [ApiController]
@@ -14,6 +26,8 @@ public class MonitorController : ControllerBase
     private readonly SchedulerCenterServices _schedulerCenterServices;
     private static DateTime _lastCheckTime = DateTime.UtcNow;
     private static TimeSpan _lastCpuTime = Process.GetCurrentProcess().TotalProcessorTime;
+    private static readonly Queue<MonitorMetric> _metricsHistory = new();
+    private static readonly int MaxHistorySize = 360; // 保留6小时的数据（1分钟采集一次）
 
     public MonitorController(SchedulerCenterServices schedulerCenterServices)
     {
@@ -139,6 +153,22 @@ public class MonitorController : ControllerBase
         var jobLatency = await GetJobLatencyAsync();
         var jobStats = await _schedulerCenterServices.QueryAllJobsAsync();
 
+        var metric = new MonitorMetric
+        {
+            Timestamp = DateTime.UtcNow,
+            CpuUsagePercent = double.Parse(systemMetrics.GetType().GetProperty("Cpu").GetValue(systemMetrics).GetType().GetProperty("UsagePercent").GetValue(systemMetrics.GetType().GetProperty("Cpu").GetValue(systemMetrics)).ToString()),
+            MemoryMb = int.Parse(systemMetrics.GetType().GetProperty("Memory").GetValue(systemMetrics).GetType().GetProperty("WorkingSetMb").GetValue(systemMetrics.GetType().GetProperty("Memory").GetValue(systemMetrics)).ToString()),
+            WorkerThreadCount = int.Parse(systemMetrics.GetType().GetProperty("ThreadPool").GetValue(systemMetrics).GetType().GetProperty("WorkerThreadCount").GetValue(systemMetrics.GetType().GetProperty("ThreadPool").GetValue(systemMetrics)).ToString()),
+            AverageLatencyMs = long.Parse(jobLatency.GetType().GetProperty("AverageLatencyMs").GetValue(jobLatency).ToString())
+        };
+
+        lock (_metricsHistory)
+        {
+            _metricsHistory.Enqueue(metric);
+            while (_metricsHistory.Count > MaxHistorySize)
+                _metricsHistory.Dequeue();
+        }
+
         return new
         {
             System = systemMetrics,
@@ -152,6 +182,29 @@ public class MonitorController : ControllerBase
             },
             Timestamp = DateTime.UtcNow
         };
+    }
+
+    /// <summary>
+    /// 获取历史监控数据
+    /// </summary>
+    [HttpGet("history")]
+    public IActionResult GetHistoryAsync([FromQuery] int minutes = 60)
+    {
+        lock (_metricsHistory)
+        {
+            var cutoffTime = DateTime.UtcNow.AddMinutes(-minutes);
+            var history = _metricsHistory
+                .Where(m => m.Timestamp >= cutoffTime)
+                .OrderBy(m => m.Timestamp)
+                .ToList();
+
+            return Ok(new
+            {
+                Data = history,
+                Count = history.Count,
+                TimeRange = $"过去{minutes}分钟"
+            });
+        }
     }
 }
 
@@ -180,4 +233,5 @@ internal class ProcessThreadCount
         }
     }
 }
+
 

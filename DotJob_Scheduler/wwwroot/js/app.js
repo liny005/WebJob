@@ -1800,28 +1800,23 @@ function showToast(message, type = 'info') {
 // ==================== 系统监控 ====================
 let monitorRefreshTimer = null;
 let chartInstances = {};
-const maxDataPoints = 20; // 最多保留20个数据点
-
-const monitorData = {
-    timestamps: [],
-    cpuUsage: [],
-    memory: [],
-    threads: [],
-    latency: []
-};
 
 function initCharts() {
-    const chartConfig = {
+    // 销毁旧图表
+    Object.values(chartInstances).forEach(chart => chart?.destroy());
+    chartInstances = {};
+
+    const commonConfig = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { display: false }
+            legend: { display: true, position: 'top' },
+            filler: { propagate: true }
         },
+        interaction: { mode: 'index', intersect: false },
         scales: {
-            y: {
-                beginAtZero: true,
-                max: 100
-            }
+            x: { grid: { display: true, color: 'rgba(0, 0, 0, 0.05)' } },
+            y: { grid: { display: true, color: 'rgba(0, 0, 0, 0.05)' }, beginAtZero: true }
         }
     };
 
@@ -1830,8 +1825,24 @@ function initCharts() {
     if (cpuCtx) {
         chartInstances.cpu = new Chart(cpuCtx, {
             type: 'line',
-            data: { labels: [], datasets: [{ label: 'CPU %', data: [], borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.1)', tension: 0.4 }] },
-            options: { ...chartConfig, scales: { y: { beginAtZero: true, max: 100 } } }
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'CPU 使用率 (%)',
+                    data: [],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: { ...commonConfig, scales: { ...commonConfig.scales, y: { ...commonConfig.scales.y, max: 100 } } }
         });
     }
 
@@ -1840,8 +1851,24 @@ function initCharts() {
     if (memCtx) {
         chartInstances.memory = new Chart(memCtx, {
             type: 'line',
-            data: { labels: [], datasets: [{ label: '内存 MB', data: [], borderColor: '#f5576c', backgroundColor: 'rgba(245, 87, 108, 0.1)', tension: 0.4 }] },
-            options: chartConfig
+            data: {
+                labels: [],
+                datasets: [{
+                    label: '内存占用 (MB)',
+                    data: [],
+                    borderColor: '#f5576c',
+                    backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#f5576c',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: commonConfig
         });
     }
 
@@ -1850,8 +1877,24 @@ function initCharts() {
     if (threadCtx) {
         chartInstances.thread = new Chart(threadCtx, {
             type: 'line',
-            data: { labels: [], datasets: [{ label: '线程数', data: [], borderColor: '#00f2fe', backgroundColor: 'rgba(0, 242, 254, 0.1)', tension: 0.4 }] },
-            options: chartConfig
+            data: {
+                labels: [],
+                datasets: [{
+                    label: '活跃线程数',
+                    data: [],
+                    borderColor: '#00f2fe',
+                    backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#00f2fe',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: commonConfig
         });
     }
 
@@ -1860,51 +1903,71 @@ function initCharts() {
     if (latencyCtx) {
         chartInstances.latency = new Chart(latencyCtx, {
             type: 'line',
-            data: { labels: [], datasets: [{ label: '延迟 ms', data: [], borderColor: '#38ef7d', backgroundColor: 'rgba(56, 239, 125, 0.1)', tension: 0.4 }] },
-            options: chartConfig
+            data: {
+                labels: [],
+                datasets: [{
+                    label: '平均延迟 (ms)',
+                    data: [],
+                    borderColor: '#38ef7d',
+                    backgroundColor: 'rgba(56, 239, 125, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#38ef7d',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: commonConfig
         });
     }
+
+    loadHistoryData();
 }
 
-function updateCharts(cpu, memory, threads, latency) {
-    const now = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+async function loadHistoryData() {
+    try {
+        const response = await fetch('/api/monitor/history?minutes=60');
+        if (!response.ok) throw new Error('获取历史数据失败');
 
-    monitorData.timestamps.push(now);
-    monitorData.cpuUsage.push(cpu);
-    monitorData.memory.push(memory);
-    monitorData.threads.push(threads);
-    monitorData.latency.push(latency);
+        const result = await response.json();
+        const data = result.data || [];
 
-    if (monitorData.timestamps.length > maxDataPoints) {
-        monitorData.timestamps.shift();
-        monitorData.cpuUsage.shift();
-        monitorData.memory.shift();
-        monitorData.threads.shift();
-        monitorData.latency.shift();
-    }
+        if (data.length === 0) return;
 
-    if (chartInstances.cpu) {
-        chartInstances.cpu.data.labels = monitorData.timestamps;
-        chartInstances.cpu.data.datasets[0].data = monitorData.cpuUsage;
-        chartInstances.cpu.update();
-    }
+        const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        const cpuValues = data.map(d => d.cpuUsagePercent);
+        const memoryValues = data.map(d => d.memoryMb);
+        const threadValues = data.map(d => d.workerThreadCount);
+        const latencyValues = data.map(d => d.averageLatencyMs);
 
-    if (chartInstances.memory) {
-        chartInstances.memory.data.labels = monitorData.timestamps;
-        chartInstances.memory.data.datasets[0].data = monitorData.memory;
-        chartInstances.memory.update();
-    }
+        if (chartInstances.cpu) {
+            chartInstances.cpu.data.labels = labels;
+            chartInstances.cpu.data.datasets[0].data = cpuValues;
+            chartInstances.cpu.update();
+        }
 
-    if (chartInstances.thread) {
-        chartInstances.thread.data.labels = monitorData.timestamps;
-        chartInstances.thread.data.datasets[0].data = monitorData.threads;
-        chartInstances.thread.update();
-    }
+        if (chartInstances.memory) {
+            chartInstances.memory.data.labels = labels;
+            chartInstances.memory.data.datasets[0].data = memoryValues;
+            chartInstances.memory.update();
+        }
 
-    if (chartInstances.latency) {
-        chartInstances.latency.data.labels = monitorData.timestamps;
-        chartInstances.latency.data.datasets[0].data = monitorData.latency;
-        chartInstances.latency.update();
+        if (chartInstances.thread) {
+            chartInstances.thread.data.labels = labels;
+            chartInstances.thread.data.datasets[0].data = threadValues;
+            chartInstances.thread.update();
+        }
+
+        if (chartInstances.latency) {
+            chartInstances.latency.data.labels = labels;
+            chartInstances.latency.data.datasets[0].data = latencyValues;
+            chartInstances.latency.update();
+        }
+    } catch (error) {
+        console.error('加载历史数据失败:', error);
     }
 }
 
@@ -1916,8 +1979,9 @@ async function refreshMonitor() {
         const result = await response.json();
         const data = result.data || result;
         updateMonitorUI(data);
-        updateCharts(data.system.cpu.usagePercent, data.system.memory.workingSetMb, data.system.threadPool.workerThreadCount, data.jobLatency.averageLatencyMs);
         updateLastUpdateTime();
+        // 每次刷新仪表板时也更新一次历史图表
+        loadHistoryData();
     } catch (error) {
         console.error('刷新监控数据出错:', error);
         showToast('error', '获取监控数据失败');
