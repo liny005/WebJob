@@ -125,9 +125,13 @@ function switchTab(tab) {
     document.getElementById('panelAudit').classList.add('d-none');
     document.getElementById('panelUsers').classList.add('d-none');
     document.getElementById('panelNotify').classList.add('d-none');
+    document.getElementById('panelMonitor')?.classList.add('d-none');
 
     // 取消所有 tab 激活状态
     document.querySelectorAll('#mainTabs .nav-link').forEach(el => el.classList.remove('active'));
+
+    // 停止监控自动刷新
+    stopMonitorRefresh();
 
     if (tab === 'jobs') {
         document.getElementById('panelJobs').classList.remove('d-none');
@@ -144,6 +148,10 @@ function switchTab(tab) {
         document.getElementById('panelNotify').classList.remove('d-none');
         document.querySelector('#tabNotifyConfig .nav-link').classList.add('active');
         loadNotifyConfigs();
+    } else if (tab === 'monitor') {
+        document.getElementById('panelMonitor')?.classList.remove('d-none');
+        document.querySelector('#mainTabs .nav-item:last-child .nav-link')?.classList.add('active');
+        refreshMonitor();
     }
 }
 
@@ -1787,7 +1795,92 @@ function showToast(message, type = 'info') {
     const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
     toast.show();
     
-    toastElement.addEventListener('hidden.bs.toast', () => {
-        toastElement.remove();
-    });
+}
+
+// ==================== 系统监控 ====================
+let monitorRefreshTimer = null;
+
+async function refreshMonitor() {
+    try {
+        const response = await fetch('/api/monitor/dashboard');
+        if (!response.ok) throw new Error('获取监控数据失败');
+
+        const data = await response.json();
+        updateMonitorUI(data);
+        updateLastUpdateTime();
+    } catch (error) {
+        console.error('刷新监控数据出错:', error);
+        showToast('error', '获取监控数据失败');
+    }
+}
+
+function updateMonitorUI(data) {
+    const system = data.system;
+    const jobLatency = data.jobLatency;
+    const jobStats = data.jobStats;
+
+    // CPU 和内存摘要
+    document.getElementById('cpuUsage').textContent = system.cpu.usagePercent + '%';
+    document.getElementById('memoryUsage').textContent = system.memory.workingSetMb + ' MB';
+    document.getElementById('threadCount').textContent = system.threadPool.workerThreadCount;
+    document.getElementById('avgLatency').textContent = jobLatency.averageLatencyMs.toFixed(0) + ' ms';
+
+    // CPU 详细信息
+    document.getElementById('cpuUsagePercent').textContent = system.cpu.usagePercent + ' %';
+    document.getElementById('processorCount').textContent = system.cpu.processorCount;
+
+    // 内存详细信息
+    document.getElementById('managedMemory').textContent = system.memory.totalManagedMemoryMb + ' MB';
+    document.getElementById('workingSet').textContent = system.memory.workingSetMb + ' MB';
+    document.getElementById('heapSize').textContent = system.memory.heapSizeMb + ' MB';
+    document.getElementById('gen2Collections').textContent = system.memory.gen2CollectionCount;
+
+    // 线程池信息
+    document.getElementById('workerThreadCount').textContent = system.threadPool.workerThreadCount;
+    document.getElementById('ioThreadCount').textContent = system.threadPool.ioThreadCount;
+    document.getElementById('pendingWorkItems').textContent = system.threadPool.pendingWorkItemCount;
+
+    // 任务延迟统计
+    document.getElementById('jobAvgLatency').textContent = jobLatency.averageLatencyMs.toFixed(0) + ' ms';
+    document.getElementById('jobMaxLatency').textContent = jobLatency.maxLatencyMs + ' ms';
+    document.getElementById('jobMinLatency').textContent = jobLatency.minLatencyMs + ' ms';
+    document.getElementById('jobExecutions').textContent = jobLatency.totalExecutions;
+
+    // 任务状态分布
+    document.getElementById('totalJobsMonitor').textContent = jobStats.total;
+    document.getElementById('normalJobsMonitor').textContent = jobStats.normal;
+    document.getElementById('pausedJobsMonitor').textContent = jobStats.paused;
+    document.getElementById('blockedJobsMonitor').textContent = jobStats.blocked;
+}
+
+function updateLastUpdateTime() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('zh-CN');
+    document.getElementById('lastUpdateTime').textContent = `最后更新：${timeStr}`;
+}
+
+function onMonitorAutoRefreshToggle() {
+    const sw = document.getElementById('monitorAutoRefresh');
+    const sel = document.getElementById('monitorRefreshInterval');
+    sel.disabled = !sw.checked;
+
+    if (monitorRefreshTimer) {
+        clearInterval(monitorRefreshTimer);
+        monitorRefreshTimer = null;
+    }
+
+    if (sw.checked) {
+        const seconds = Math.max(5, parseInt(sel.value) || 10);
+        monitorRefreshTimer = setInterval(() => { refreshMonitor(); }, seconds * 1000);
+        refreshMonitor();
+    }
+}
+
+function stopMonitorRefresh() {
+    if (monitorRefreshTimer) {
+        clearInterval(monitorRefreshTimer);
+        monitorRefreshTimer = null;
+    }
+    const sw = document.getElementById('monitorAutoRefresh');
+    if (sw) sw.checked = false;
 }

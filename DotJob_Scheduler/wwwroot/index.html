@@ -231,6 +231,11 @@
                         <span class="badge bg-warning text-dark admin-badge">Admin</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="switchTab('monitor')">
+                        <i class="bi bi-speedometer2"></i> 系统监控
+                    </a>
+                </li>
             </ul>
             <div class="d-flex align-items-center">
                 <span class="text-white me-3" id="userDisplay">
@@ -628,6 +633,224 @@
             </div><!-- /flex -->
         </div><!-- /card -->
     </div><!-- /panelNotify -->
+
+    <!-- ===== 系统监控 Tab ===== -->
+    <div id="panelMonitor" class="main-content d-none">
+        <!-- 系统监控统计卡片 -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h3 id="cpuUsage">--</h3>
+                    <p class="mb-0"><i class="bi bi-cpu"></i> CPU 使用率</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3 id="memoryUsage">--</h3>
+                    <p class="mb-0"><i class="bi bi-memory"></i> 内存占用</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h3 id="threadCount">--</h3>
+                    <p class="mb-0"><i class="bi bi-diagram-3"></i> 活跃线程</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <h3 id="avgLatency">--</h3>
+                    <p class="mb-0"><i class="bi bi-hourglass-split"></i> 平均延迟</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细监控数据 -->
+        <div class="row mt-4">
+            <!-- CPU 和内存详情 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-cpu"></i> CPU 信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">CPU 使用率</p>
+                                <h5 id="cpuUsagePercent">-- %</h5>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">处理器核心数</p>
+                                <h5 id="processorCount">--</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 内存详情 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-memory"></i> 内存信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">托管内存</p>
+                                <h5 id="managedMemory">-- MB</h5>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">工作集</p>
+                                <h5 id="workingSet">-- MB</h5>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">堆大小</p>
+                                <h5 id="heapSize">-- MB</h5>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">GC 回收次数 (Gen2)</p>
+                                <h5 id="gen2Collections">--</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 线程池和任务信息 -->
+        <div class="row mt-4">
+            <!-- 线程池详情 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-diagram-3"></i> 线程池状态</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">工作线程</p>
+                                <h5 id="workerThreadCount">--</h5>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">I/O 线程</p>
+                                <h5 id="ioThreadCount">--</h5>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <p class="text-muted small mb-1">待处理工作项</p>
+                                <h5 id="pendingWorkItems">--</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务执行延迟统计 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-hourglass-split"></i> 任务延迟统计</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">平均延迟</p>
+                                <h5 id="jobAvgLatency">-- ms</h5>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">最大延迟</p>
+                                <h5 id="jobMaxLatency">-- ms</h5>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">最小延迟</p>
+                                <h5 id="jobMinLatency">-- ms</h5>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-muted small mb-1">执行总数</p>
+                                <h5 id="jobExecutions">--</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 任务状态统计 -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-bar-chart"></i> 任务状态分布</h5>
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshMonitor()">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center py-3">
+                                    <h6 class="text-muted">总任务数</h6>
+                                    <h3 id="totalJobsMonitor" class="text-primary">--</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center py-3">
+                                    <h6 class="text-muted">正常</h6>
+                                    <h3 id="normalJobsMonitor" style="color: #38ef7d;">--</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center py-3">
+                                    <h6 class="text-muted">暂停</h6>
+                                    <h3 id="pausedJobsMonitor" style="color: #f5576c;">--</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center py-3">
+                                    <h6 class="text-muted">阻塞</h6>
+                                    <h3 id="blockedJobsMonitor" style="color: #999;">--</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 自动刷新控制 -->
+        <div class="row mt-4 mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="monitorAutoRefresh"
+                                           onchange="onMonitorAutoRefreshToggle()" style="cursor:pointer;">
+                                    <label class="form-check-label" for="monitorAutoRefresh">自动刷新</label>
+                                </div>
+                                <select class="form-select form-select-sm" id="monitorRefreshInterval"
+                                        style="width:120px;" onchange="onMonitorAutoRefreshToggle()" disabled>
+                                    <option value="5">5 秒</option>
+                                    <option value="10" selected>10 秒</option>
+                                    <option value="30">30 秒</option>
+                                    <option value="60">60 秒</option>
+                                </select>
+                            </div>
+                            <div class="text-muted small" id="lastUpdateTime">
+                                最后更新：--
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- /panelMonitor -->
 
     <!-- 新增用户模态框 -->
     <div class="modal fade" id="addUserModal" tabindex="-1">

@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # ---------- 构建阶段 ----------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
