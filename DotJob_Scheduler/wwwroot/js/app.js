@@ -1933,7 +1933,7 @@ async function loadHistoryData() {
         if (!response.ok) throw new Error('获取历史数据失败');
 
         const result = await response.json();
-        const data = result.data || [];
+        const data = result.data?.data || [];
 
         if (data.length === 0) return;
 
