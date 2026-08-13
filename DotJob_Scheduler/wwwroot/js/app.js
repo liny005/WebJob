@@ -1805,7 +1805,8 @@ async function refreshMonitor() {
         const response = await fetch('/api/monitor/dashboard');
         if (!response.ok) throw new Error('获取监控数据失败');
 
-        const data = await response.json();
+        const result = await response.json();
+        const data = result.data || result;
         updateMonitorUI(data);
         updateLastUpdateTime();
     } catch (error) {
