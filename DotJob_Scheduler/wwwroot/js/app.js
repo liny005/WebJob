@@ -1799,6 +1799,114 @@ function showToast(message, type = 'info') {
 
 // ==================== 系统监控 ====================
 let monitorRefreshTimer = null;
+let chartInstances = {};
+const maxDataPoints = 20; // 最多保留20个数据点
+
+const monitorData = {
+    timestamps: [],
+    cpuUsage: [],
+    memory: [],
+    threads: [],
+    latency: []
+};
+
+function initCharts() {
+    const chartConfig = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    };
+
+    // CPU 图表
+    const cpuCtx = document.getElementById('cpuChart')?.getContext('2d');
+    if (cpuCtx) {
+        chartInstances.cpu = new Chart(cpuCtx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'CPU %', data: [], borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.1)', tension: 0.4 }] },
+            options: { ...chartConfig, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+    }
+
+    // 内存图表
+    const memCtx = document.getElementById('memoryChart')?.getContext('2d');
+    if (memCtx) {
+        chartInstances.memory = new Chart(memCtx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: '内存 MB', data: [], borderColor: '#f5576c', backgroundColor: 'rgba(245, 87, 108, 0.1)', tension: 0.4 }] },
+            options: chartConfig
+        });
+    }
+
+    // 线程图表
+    const threadCtx = document.getElementById('threadChart')?.getContext('2d');
+    if (threadCtx) {
+        chartInstances.thread = new Chart(threadCtx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: '线程数', data: [], borderColor: '#00f2fe', backgroundColor: 'rgba(0, 242, 254, 0.1)', tension: 0.4 }] },
+            options: chartConfig
+        });
+    }
+
+    // 延迟图表
+    const latencyCtx = document.getElementById('latencyChart')?.getContext('2d');
+    if (latencyCtx) {
+        chartInstances.latency = new Chart(latencyCtx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: '延迟 ms', data: [], borderColor: '#38ef7d', backgroundColor: 'rgba(56, 239, 125, 0.1)', tension: 0.4 }] },
+            options: chartConfig
+        });
+    }
+}
+
+function updateCharts(cpu, memory, threads, latency) {
+    const now = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    monitorData.timestamps.push(now);
+    monitorData.cpuUsage.push(cpu);
+    monitorData.memory.push(memory);
+    monitorData.threads.push(threads);
+    monitorData.latency.push(latency);
+
+    if (monitorData.timestamps.length > maxDataPoints) {
+        monitorData.timestamps.shift();
+        monitorData.cpuUsage.shift();
+        monitorData.memory.shift();
+        monitorData.threads.shift();
+        monitorData.latency.shift();
+    }
+
+    if (chartInstances.cpu) {
+        chartInstances.cpu.data.labels = monitorData.timestamps;
+        chartInstances.cpu.data.datasets[0].data = monitorData.cpuUsage;
+        chartInstances.cpu.update();
+    }
+
+    if (chartInstances.memory) {
+        chartInstances.memory.data.labels = monitorData.timestamps;
+        chartInstances.memory.data.datasets[0].data = monitorData.memory;
+        chartInstances.memory.update();
+    }
+
+    if (chartInstances.thread) {
+        chartInstances.thread.data.labels = monitorData.timestamps;
+        chartInstances.thread.data.datasets[0].data = monitorData.threads;
+        chartInstances.thread.update();
+    }
+
+    if (chartInstances.latency) {
+        chartInstances.latency.data.labels = monitorData.timestamps;
+        chartInstances.latency.data.datasets[0].data = monitorData.latency;
+        chartInstances.latency.update();
+    }
+}
 
 async function refreshMonitor() {
     try {
@@ -1808,6 +1916,7 @@ async function refreshMonitor() {
         const result = await response.json();
         const data = result.data || result;
         updateMonitorUI(data);
+        updateCharts(data.system.cpu.usagePercent, data.system.memory.workingSetMb, data.system.threadPool.workerThreadCount, data.jobLatency.averageLatencyMs);
         updateLastUpdateTime();
     } catch (error) {
         console.error('刷新监控数据出错:', error);
@@ -1868,6 +1977,7 @@ function startMonitorAutoRefresh() {
         clearInterval(monitorRefreshTimer);
         monitorRefreshTimer = null;
     }
+    initCharts();
     refreshMonitor();
     monitorRefreshTimer = setInterval(() => { refreshMonitor(); }, 5000);
 }
@@ -1877,4 +1987,6 @@ function stopMonitorRefresh() {
         clearInterval(monitorRefreshTimer);
         monitorRefreshTimer = null;
     }
+    Object.values(chartInstances).forEach(chart => chart?.destroy());
+    chartInstances = {};
 }
