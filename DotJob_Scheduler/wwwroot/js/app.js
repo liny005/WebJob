@@ -151,7 +151,7 @@ function switchTab(tab) {
     } else if (tab === 'monitor') {
         document.getElementById('panelMonitor')?.classList.remove('d-none');
         document.querySelector('#mainTabs .nav-item:last-child .nav-link')?.classList.add('active');
-        refreshMonitor();
+        startMonitorAutoRefresh();
     }
 }
 
@@ -1857,24 +1857,19 @@ function updateMonitorUI(data) {
 function updateLastUpdateTime() {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('zh-CN');
-    document.getElementById('lastUpdateTime').textContent = `最后更新：${timeStr}`;
+    const lastUpdateEl = document.getElementById('lastUpdateTime');
+    if (lastUpdateEl) {
+        lastUpdateEl.textContent = `最后更新：${timeStr}`;
+    }
 }
 
-function onMonitorAutoRefreshToggle() {
-    const sw = document.getElementById('monitorAutoRefresh');
-    const sel = document.getElementById('monitorRefreshInterval');
-    sel.disabled = !sw.checked;
-
+function startMonitorAutoRefresh() {
     if (monitorRefreshTimer) {
         clearInterval(monitorRefreshTimer);
         monitorRefreshTimer = null;
     }
-
-    if (sw.checked) {
-        const seconds = Math.max(5, parseInt(sel.value) || 10);
-        monitorRefreshTimer = setInterval(() => { refreshMonitor(); }, seconds * 1000);
-        refreshMonitor();
-    }
+    refreshMonitor();
+    monitorRefreshTimer = setInterval(() => { refreshMonitor(); }, 5000);
 }
 
 function stopMonitorRefresh() {
@@ -1882,6 +1877,4 @@ function stopMonitorRefresh() {
         clearInterval(monitorRefreshTimer);
         monitorRefreshTimer = null;
     }
-    const sw = document.getElementById('monitorAutoRefresh');
-    if (sw) sw.checked = false;
 }

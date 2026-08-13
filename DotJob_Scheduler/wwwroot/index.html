@@ -821,35 +821,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- 自动刷新控制 -->
-        <div class="row mt-4 mb-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" id="monitorAutoRefresh"
-                                           onchange="onMonitorAutoRefreshToggle()" style="cursor:pointer;">
-                                    <label class="form-check-label" for="monitorAutoRefresh">自动刷新</label>
-                                </div>
-                                <select class="form-select form-select-sm" id="monitorRefreshInterval"
-                                        style="width:120px;" onchange="onMonitorAutoRefreshToggle()" disabled>
-                                    <option value="5">5 秒</option>
-                                    <option value="10" selected>10 秒</option>
-                                    <option value="30">30 秒</option>
-                                    <option value="60">60 秒</option>
-                                </select>
-                            </div>
-                            <div class="text-muted small" id="lastUpdateTime">
-                                最后更新：--
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div><!-- /panelMonitor -->
 
     <!-- 新增用户模态框 -->
