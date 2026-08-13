@@ -151,7 +151,6 @@ public class MonitorController : ControllerBase
     {
         var systemMetrics = await GetSystemMetricsAsync();
         var jobLatency = await GetJobLatencyAsync();
-        var jobStats = await _schedulerCenterServices.QueryAllJobsAsync();
 
         var metric = new MonitorMetric
         {
@@ -173,13 +172,6 @@ public class MonitorController : ControllerBase
         {
             System = systemMetrics,
             JobLatency = jobLatency,
-            JobStats = new
-            {
-                Total = jobStats.Count,
-                Normal = jobStats.Count(j => j.TriggerState == 1),
-                Paused = jobStats.Count(j => j.TriggerState == 2),
-                Blocked = jobStats.Count(j => j.TriggerState == 5)
-            },
             Timestamp = DateTime.UtcNow
         };
     }
