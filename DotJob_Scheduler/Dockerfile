@@ -19,6 +19,7 @@ RUN dotnet publish DotJob_Scheduler/DotJob_Scheduler.csproj -c Release -o /app/p
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+COPY --from=build /src/scripts/init_database.sql .
 
 # 容器内监听 8080 端口（.NET 8+ 官方镜像默认端口）
 ENV ASPNETCORE_HTTP_PORTS=8080
