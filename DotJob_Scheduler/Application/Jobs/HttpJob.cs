@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Web;
 using DotJob_Model.Entity;
 using Host;
 using Quartz;
@@ -66,7 +65,7 @@ public class HttpJob : JobBase, IJob
                 break;
         }
 
-        var result = HttpUtility.HtmlEncode(await response.Content.ReadAsStringAsync());
+        var result = await response.Content.ReadAsStringAsync();
         LogInfo.Result     = result;
         LogInfo.StatusCode = (int)response.StatusCode;
 

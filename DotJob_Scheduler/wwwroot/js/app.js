@@ -19,16 +19,67 @@ let auditPageSize = 20;
 // 当前生效的搜索条件（只有用户点击"搜索"按钮才更新）
 let activeFilter = { jobName: '', jobGroup: '', triggerState: '' };
 
+// 日志弹窗当前生效的筛选条件
+let activeLogFilter = { status: '', statusCode: '', startTime: '', endTime: '' };
+
+// 已加载的 partial 面板（避免重复 fetch）
+const loadedPartials = new Set();
+
+// 全局拦截 href="#" 占位链接（分页、操作按钮等）的默认行为：
+// 空 hash 导航会把页面滚动回顶部，尤其弹窗（日志分页）打开时会带动底层页面跳顶
+document.addEventListener('click', (e) => {
+    const link = e.target.closest('a[href="#"]');
+    if (link) e.preventDefault();
+});
+
+// Tab 名称 → partial 文件映射
+const partialMap = {
+    jobs:    'partials/jobs.html',
+    audit:   'partials/audit.html',
+    users:   'partials/users.html',
+    notify:  'partials/notify.html',
+    monitor: 'partials/monitor.html'
+};
+
+// 加载指定 Tab 的 partial HTML（未加载过时）
+async function loadPartial(tab) {
+    if (loadedPartials.has(tab)) return true;
+    const panel = document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    const path = partialMap[tab];
+    if (!panel || !path) return false;
+
+    try {
+        panel.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+        const response = await fetch(path + '?v=20260820a');
+        if (!response.ok) throw new Error('加载失败: ' + response.status);
+        panel.innerHTML = await response.text();
+        loadedPartials.add(tab);
+        return true;
+    } catch (error) {
+        console.error('加载面板失败:', tab, error);
+        panel.innerHTML = '<div class="alert alert-danger m-4">加载页面片段失败，请刷新重试</div>';
+        return false;
+    }
+}
+
 // 页面加载初始化
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     checkAuth();
-    loadJobs();
-    
-    // 设置默认开始时间为当前时间
-    const now = new Date();
-    document.getElementById('beginTime').value =
-        new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    
+
+    // 先加载默认任务列表面板，再执行初始化
+    const jobsLoaded = await loadPartial('jobs');
+    if (jobsLoaded) {
+        loadJobs();
+
+        // 设置默认开始时间为当前时间
+        const now = new Date();
+        const beginTimeEl = document.getElementById('beginTime');
+        if (beginTimeEl) {
+            beginTimeEl.value =
+                new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        }
+    }
+
     // 不自动启动刷新，等用户勾选开关
 
     // ── 嵌套 Modal 修复 ──────────────────────────────────────────
@@ -196,7 +247,7 @@ async function checkAuth() {
 }
 
 // 切换 Tab
-function switchTab(tab) {
+async function switchTab(tab) {
     currentTab = tab;
 
     // 离开任务列表：默认关闭自动刷新开关，切回后需手动开启
@@ -225,6 +276,9 @@ function switchTab(tab) {
         clearInterval(autoRefreshTimer);
         autoRefreshTimer = null;
     }
+
+    // 确保目标面板 HTML 已加载
+    await loadPartial(tab);
 
     if (tab === 'jobs') {
         document.getElementById('panelJobs').classList.remove('d-none');
@@ -711,6 +765,32 @@ function toggleTriggerOptions() {
     }
 }
 
+// 验证 Cron 表达式（Quartz 风格：6 或 7 字段）
+function validateCron(cron) {
+    if (!cron || typeof cron !== 'string') return false;
+    const parts = cron.trim().split(/\s+/);
+    if (parts.length !== 6 && parts.length !== 7) return false;
+
+    // 每个字段允许的字符：数字、*、?、,、-、/、L、W、#，以及星期缩写和范围
+    const fieldPattern = /^(\*|\?|[0-9]+([\-,/][0-9]+)?|[0-9]+L|[0-9]+W|L|LW|W|#[1-7]|[0-7]#[1-5]|(MON|TUE|WED|THU|FRI|SAT|SUN)([LC#]|(-(MON|TUE|WED|THU|FRI|SAT|SUN|[0-7])))?)(,(\*|\?|[0-9]+([\-,/][0-9]+)?|[0-9]+L|[0-9]+W|L|LW|W|#[1-7]|[0-7]#[1-5]|(MON|TUE|WED|THU|FRI|SAT|SUN)([LC#]|(-(MON|TUE|WED|THU|FRI|SAT|SUN|[0-7])))?))*$/i;
+
+    for (const part of parts) {
+        if (!fieldPattern.test(part)) return false;
+    }
+    return true;
+}
+
+// 验证请求 URL（仅允许 http/https）
+function validateRequestUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
 // 提交新增任务
 async function submitAddJob() {
     const jobName = document.getElementById('jobName').value.trim();
@@ -728,23 +808,35 @@ async function submitAddJob() {
     const runTotal = document.getElementById('runTotal').value;
     const mailNotice = parseInt(document.getElementById('mailNotice').value) || 0;
     const dingTalkNotice = parseInt(document.getElementById('dingTalkNotice').value) || 0;
-    
+
     // 验证必填字段
     if (!jobName || !jobGroup) {
         showToast('请填写任务名称和分组', 'error');
         return;
     }
-    
+
     if (triggerType === 1 && !cron) {
         showToast('请填写Cron表达式', 'error');
         return;
     }
-    
+
+    // 验证 Cron 表达式格式
+    if (triggerType === 1 && !validateCron(cron)) {
+        showToast('Cron 表达式格式不正确', 'error');
+        return;
+    }
+
     if (!requestUrl) {
         showToast('请填写请求URL', 'error');
         return;
     }
-    
+
+    // 验证请求 URL 格式
+    if (!validateRequestUrl(requestUrl)) {
+        showToast('请求 URL 格式不正确，请输入有效的 http:// 或 https:// 地址', 'error');
+        return;
+    }
+
     // 验证 JSON 格式
     if (headers) {
         try {
@@ -754,7 +846,7 @@ async function submitAddJob() {
             return;
         }
     }
-    
+
     if (requestParameters) {
         try {
             JSON.parse(requestParameters);
@@ -763,7 +855,7 @@ async function submitAddJob() {
             return;
         }
     }
-    
+
     const jobData = {
         jobName,
         jobGroup,
@@ -1011,13 +1103,51 @@ async function viewLogs(jobName, jobGroup) {
     currentJobName = jobName;
     currentJobGroup = jobGroup;
     logCurrentPage = 1;
-    
+
+    // 重置日志筛选条件
+    activeLogFilter = { status: '', statusCode: '', startTime: '', endTime: '' };
+    const statusEl = document.getElementById('logSearchStatus');
+    const statusCodeEl = document.getElementById('logSearchStatusCode');
+    const startTimeEl = document.getElementById('logSearchStartTime');
+    const endTimeEl = document.getElementById('logSearchEndTime');
+    if (statusEl) statusEl.value = '';
+    if (statusCodeEl) statusCodeEl.value = '';
+    if (startTimeEl) startTimeEl.value = '';
+    if (endTimeEl) endTimeEl.value = '';
+
     document.getElementById('logJobTitle').textContent = `${jobGroup}.${jobName}`;
-    
+
     const modal = new bootstrap.Modal(document.getElementById('jobLogsModal'));
     modal.show();
-    
+
     await loadLogs();
+}
+
+// 查询日志（根据输入条件刷新）
+function searchLogs() {
+    activeLogFilter = {
+        status: document.getElementById('logSearchStatus')?.value || '',
+        statusCode: document.getElementById('logSearchStatusCode')?.value || '',
+        startTime: document.getElementById('logSearchStartTime')?.value || '',
+        endTime: document.getElementById('logSearchEndTime')?.value || ''
+    };
+    logCurrentPage = 1;
+    loadLogs();
+}
+
+// 重置日志查询
+function resetLogSearch() {
+    const statusEl = document.getElementById('logSearchStatus');
+    const statusCodeEl = document.getElementById('logSearchStatusCode');
+    const startTimeEl = document.getElementById('logSearchStartTime');
+    const endTimeEl = document.getElementById('logSearchEndTime');
+    if (statusEl) statusEl.value = '';
+    if (statusCodeEl) statusCodeEl.value = '';
+    if (startTimeEl) startTimeEl.value = '';
+    if (endTimeEl) endTimeEl.value = '';
+    activeLogFilter = { status: '', statusCode: '', startTime: '', endTime: '' };
+    logCurrentPage = 1;
+    loadLogs();
 }
 
 // 加载日志
@@ -1029,16 +1159,26 @@ async function loadLogs() {
             pageNumber: logCurrentPage,
             pageSize: logPageSize
         });
-        
+
+        if (activeLogFilter.status) params.set('status', activeLogFilter.status);
+        if (activeLogFilter.statusCode) params.set('statusCode', activeLogFilter.statusCode);
+        if (activeLogFilter.startTime) {
+            // 保持为本地时间字符串，避免时区转换导致与数据库存储时间不一致
+            params.set('startTime', activeLogFilter.startTime.replace('T', ' '));
+        }
+        if (activeLogFilter.endTime) {
+            params.set('endTime', activeLogFilter.endTime.replace('T', ' '));
+        }
+
         const response = await fetch(`/api/job/logs?${params}`);
         const result = await response.json();
-        
+
         // 处理 ResultFilter 包装的响应: { code: 0, message: "成功", data: { Data: [...], PageInfo: {...} } }
         if (result.code === 0 && result.data) {
             const pageResponse = result.data;
             const logs = pageResponse.Data || pageResponse.data || [];
             const pageInfo = pageResponse.PageInfo || pageResponse.pageInfo;
-            
+
             renderLogTable(logs);
             renderLogPagination(pageInfo);
         }

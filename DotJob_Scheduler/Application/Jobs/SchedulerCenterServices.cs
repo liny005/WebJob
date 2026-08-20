@@ -4,6 +4,7 @@ using DotJob_Model.WebJobs;
 using Host.Common;
 using MySql.Data.MySqlClient;
 using Quartz;
+using Quartz.Impl.Matchers;
 
 namespace Job_Scheduler.Application.Jobs;
 
@@ -256,6 +257,34 @@ LIMIT @offset, @size";
     }
 
     /// <summary>
+    /// 删除所有任务及相关日志、配置记录（测试清理专用）
+    /// </summary>
+    /// <returns>删除的任务数与日志数</returns>
+    public async Task<(int DeletedJobs, int DeletedLogs)> DeleteAllJobsAsync()
+    {
+        var scheduler = await GetSchedulerAsync();
+        var jobKeys = await scheduler.GetJobKeys(GroupMatcher<JobKey>.AnyGroup());
+
+        foreach (var jobKey in jobKeys)
+        {
+            await scheduler.DeleteJob(jobKey);
+        }
+
+        await using var conn = new MySqlConnection(AppConfig.ConnectionString);
+        await conn.OpenAsync();
+
+        await using var clearLog = conn.CreateCommand();
+        clearLog.CommandText = "DELETE FROM JOB_LOG";
+        var deletedLogs = await clearLog.ExecuteNonQueryAsync();
+
+        await using var clearCfg = conn.CreateCommand();
+        clearCfg.CommandText = "DELETE FROM JOB_CONFIG";
+        await clearCfg.ExecuteNonQueryAsync();
+
+        return (jobKeys.Count, deletedLogs);
+    }
+
+    /// <summary>
     /// 删除数据库中任务相关记录（JOB_LOG、JOB_CONFIG），protected virtual 供测试覆盖
     /// </summary>
     /// <param name="jobGroup">任务分组</param>
@@ -345,24 +374,71 @@ LIMIT @offset, @size";
     /// <param name="jobGroup">任务分组</param>
     /// <param name="pageNumber">页码（从1开始）</param>
     /// <param name="pageSize">每页数目</param>
+    /// <param name="status">可选：执行状态筛选（success=成功，failure=失败）</param>
+    /// <param name="statusCode">可选：HTTP 状态码范围（如 2xx、4xx）</param>
+    /// <param name="startTime">可选：开始时间下限</param>
+    /// <param name="endTime">可选：结束时间上限</param>
     /// <returns>分页的日志集合与分页信息</returns>
-    public async Task<PageResponse<LogEntity>> QueryJobLogsAsync(string jobName, string jobGroup, int pageNumber = 1, int pageSize = 20)
+    public async Task<PageResponse<LogEntity>> QueryJobLogsAsync(
+        string jobName,
+        string jobGroup,
+        int pageNumber = 1,
+        int pageSize = 20,
+        string? status = null,
+        string? statusCode = null,
+        DateTime? startTime = null,
+        DateTime? endTime = null)
     {
         var fullJobName = $"{jobGroup}.{jobName}";
+        var whereClauses = new List<string> { "JOB_NAME = @jobName" };
+
+        if (string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
+            whereClauses.Add("EXECUTION_STATUS = 1");
+        else if (string.Equals(status, "failure", StringComparison.OrdinalIgnoreCase))
+            whereClauses.Add("EXECUTION_STATUS = 2");
+
+        int? statusCodePrefix = null;
+        if (!string.IsNullOrWhiteSpace(statusCode))
+        {
+            var firstDigit = statusCode.Trim().FirstOrDefault(char.IsDigit);
+            if (firstDigit != '\0' && firstDigit != '0' && int.TryParse(firstDigit.ToString(), out var prefix))
+                statusCodePrefix = prefix;
+        }
+        if (statusCodePrefix.HasValue)
+            whereClauses.Add("STATUS_CODE IS NOT NULL AND FLOOR(STATUS_CODE / 100) = @statusCodePrefix");
+
+        if (startTime.HasValue)
+            whereClauses.Add("BEGIN_TIME >= @startTime");
+        if (endTime.HasValue)
+            whereClauses.Add("BEGIN_TIME <= @endTime");
+
+        var where = string.Join(" AND ", whereClauses);
+
         await using var conn = new MySqlConnection(AppConfig.ConnectionString);
         await conn.OpenAsync();
 
+        void AddCommonParameters(MySqlCommand command)
+        {
+            command.Parameters.AddWithValue("@jobName", fullJobName);
+            if (statusCodePrefix.HasValue)
+                command.Parameters.AddWithValue("@statusCodePrefix", statusCodePrefix.Value);
+            if (startTime.HasValue)
+                command.Parameters.AddWithValue("@startTime", startTime.Value);
+            if (endTime.HasValue)
+                command.Parameters.AddWithValue("@endTime", endTime.Value);
+        }
+
         await using var countCmd = conn.CreateCommand();
-        countCmd.CommandText = "SELECT COUNT(*) FROM JOB_LOG WHERE JOB_NAME = @jobName";
-        countCmd.Parameters.AddWithValue("@jobName", fullJobName);
+        countCmd.CommandText = $"SELECT COUNT(*) FROM JOB_LOG WHERE {where}";
+        AddCommonParameters(countCmd);
         var total = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
 
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT ID, BEGIN_TIME, END_TIME, JOB_NAME, JOB_GROUP, ERROR_MSG,
-                                   EXECUTE_TIME, EXECUTION_STATUS, URL, REQUEST_TYPE, PARAMETERS, RESULT, STATUS_CODE
-                            FROM JOB_LOG WHERE JOB_NAME = @jobName
-                            ORDER BY BEGIN_TIME DESC LIMIT @offset, @size";
-        cmd.Parameters.AddWithValue("@jobName", fullJobName);
+        cmd.CommandText = $@"SELECT ID, BEGIN_TIME, END_TIME, JOB_NAME, JOB_GROUP, ERROR_MSG,
+                                    EXECUTE_TIME, EXECUTION_STATUS, URL, REQUEST_TYPE, PARAMETERS, RESULT, STATUS_CODE
+                             FROM JOB_LOG WHERE {where}
+                             ORDER BY BEGIN_TIME DESC LIMIT @offset, @size";
+        AddCommonParameters(cmd);
         cmd.Parameters.AddWithValue("@offset", (pageNumber - 1) * pageSize);
         cmd.Parameters.AddWithValue("@size", pageSize);
 

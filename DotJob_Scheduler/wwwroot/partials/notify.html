@@ -1,0 +1,130 @@
+<div class="card" style="border-radius:15px;overflow:hidden;min-height:360px;">
+    <div class="d-flex" style="min-height:360px;">
+
+        <!-- 左侧竖向渠道菜单 -->
+        <div class="notify-side-nav d-flex flex-column py-3">
+            <a href="#" class="nav-link active" id="notifyTab_DingTalk"
+               onclick="switchNotifyTab('DingTalk');return false;">
+                钉钉配置
+            </a>
+            <a href="#" class="nav-link" id="notifyTab_Email"
+               onclick="switchNotifyTab('Email');return false;">
+                邮件配置
+            </a>
+            <a href="#" class="nav-link" id="notifyTab_Feishu"
+               onclick="switchNotifyTab('Feishu');return false;">
+                飞书配置
+            </a>
+        </div>
+
+        <!-- 右侧配置区域 -->
+        <div class="flex-grow-1 p-5">
+            <input type="hidden" id="notifyCurrentChannel" value="DingTalk">
+
+            <!-- 加载中 -->
+            <div id="notifyFormLoading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+
+            <!-- 内容区 -->
+            <div id="notifyFormArea" class="d-none">
+
+                <!-- ── 钉钉（可用） ── -->
+                <div id="notifyForm_DingTalk" class="notify-channel-form">
+                    <div class="mb-4 row align-items-center">
+                        <div class="col-3 notify-form-label">Webhook 连接：</div>
+                        <div class="col-9">
+                            <input type="text" class="form-control" id="dt_webhookUrl"
+                                   placeholder="如：https://oapi.dingtalk.com/robot/send?access_token=xxx">
+                        </div>
+                    </div>
+                    <div class="mb-4 row align-items-center">
+                        <div class="col-3 notify-form-label">加签密钥：</div>
+                        <div class="col-9">
+                            <input type="password" class="form-control" id="dt_secret"
+                                   placeholder="如：SEC...（只支持加签推送）" autocomplete="new-password">
+                        </div>
+                    </div>
+                    <!-- 底部按钮 -->
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <button class="btn btn-outline-secondary" onclick="testNotifyInline()">
+                            <i class="bi bi-send"></i> 测试
+                        </button>
+                        <button class="btn btn-primary px-4" onclick="saveNotifyInline()">
+                            确定
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── 飞书（暂未实现） ── -->
+                <div id="notifyForm_Feishu" class="notify-channel-form d-none">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-tools" style="font-size:3rem;opacity:.3;"></i>
+                        <p class="mt-3 mb-0 fs-6">飞书机器人推送暂未实现，敬请期待</p>
+                    </div>
+                </div>
+
+                <!-- ── 邮件（SMTP） ── -->
+                <div id="notifyForm_Email" class="notify-channel-form d-none">
+                    <div class="mb-4 row align-items-center">
+                        <div class="col-3 notify-form-label">SMTP 服务器：</div>
+                        <div class="col-9">
+                            <input type="text" class="form-control" id="email_smtpHost"
+                                   placeholder="如：smtp.163.com / smtp.qq.com / smtp.gmail.com">
+                        </div>
+                    </div>
+                    <div class="mb-4 row align-items-center">
+                        <div class="col-3 notify-form-label">端口：</div>
+                        <div class="col-4">
+                            <input type="number" class="form-control" id="email_smtpPort" value="465" min="1" max="65535">
+                        </div>
+                        <div class="col-5 d-flex align-items-center gap-3 ps-3">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="email_useSsl" checked>
+                                <label class="form-check-label" for="email_useSsl">SSL 加密</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4 row align-items-center">
+                        <div class="col-3 notify-form-label">发件人账号：</div>
+                        <div class="col-9">
+                            <input type="email" class="form-control" id="email_username"
+                                   placeholder="如：your@163.com">
+                        </div>
+                    </div>
+                    <div class="mb-4 row align-items-center">
+                        <div class="col-3 notify-form-label">授权码/密码：</div>
+                        <div class="col-9">
+                            <input type="password" class="form-control" id="email_password"
+                                   placeholder="邮箱授权码（非登录密码）">
+                        </div>
+                    </div>
+                    <div class="mb-4 row align-items-center">
+                        <div class="col-3 notify-form-label">发件人名称：</div>
+                        <div class="col-9">
+                            <input type="text" class="form-control" id="email_fromName"
+                                   placeholder="如：DotJob 调度系统（可选）">
+                        </div>
+                    </div>
+                    <div class="mb-4 row align-items-center">
+                        <div class="col-3 notify-form-label">收件人：</div>
+                        <div class="col-9">
+                            <input type="text" class="form-control" id="email_to"
+                                   placeholder="多个收件人用英文逗号分隔，如：a@x.com,b@x.com">
+                        </div>
+                    </div>
+                    <!-- 底部按钮 -->
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <button class="btn btn-outline-secondary" onclick="testNotifyInline()">
+                            <i class="bi bi-send"></i> 测试
+                        </button>
+                        <button class="btn btn-primary px-4" onclick="saveNotifyInline()">
+                            确定
+                        </button>
+                    </div>
+                </div>
+
+            </div><!-- /notifyFormArea -->
+        </div><!-- /right -->
+    </div><!-- /flex -->
+</div><!-- /card -->

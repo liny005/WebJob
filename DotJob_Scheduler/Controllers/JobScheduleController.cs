@@ -132,15 +132,23 @@ public class JobScheduleController : ControllerBase
     /// <param name="jobGroup">任务分组</param>
     /// <param name="pageNumber">页码（从1开始）</param>
     /// <param name="pageSize">每页数量</param>
+    /// <param name="status">可选：执行状态筛选（success=成功，failure=失败）</param>
+    /// <param name="statusCode">可选：HTTP 状态码范围（如 2xx、4xx）</param>
+    /// <param name="startTime">可选：开始时间下限</param>
+    /// <param name="endTime">可选：结束时间上限</param>
     /// <returns>分页的日志列表</returns>
     [HttpGet("logs")]
     public async Task<PageResponse<LogEntity>> GetJobLogsAsync(
         [FromQuery] string jobName,
         [FromQuery] string jobGroup,
         [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? status = null,
+        [FromQuery] string? statusCode = null,
+        [FromQuery] DateTime? startTime = null,
+        [FromQuery] DateTime? endTime = null)
     {
-        return await _schedulerCenterServices.QueryJobLogsAsync(jobName, jobGroup, pageNumber, pageSize);
+        return await _schedulerCenterServices.QueryJobLogsAsync(jobName, jobGroup, pageNumber, pageSize, status, statusCode, startTime, endTime);
     }
 
     /// <summary>

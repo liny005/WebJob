@@ -1,0 +1,191 @@
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+body {
+    background-color: #f5f7fa;
+    min-height: 100vh;
+}
+.navbar {
+    background: var(--primary-gradient) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+.main-content {
+    padding: 30px;
+}
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+.card-header {
+    background: white;
+    border-bottom: 1px solid #eee;
+    padding: 20px;
+    border-radius: 15px 15px 0 0 !important;
+}
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #6c757d;
+}
+.badge-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+.btn-action {
+    padding: 5px 10px;
+    border-radius: 8px;
+    margin: 0 2px;
+}
+.search-box {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 2px solid #e1e1e1;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+.btn-primary {
+    background: var(--primary-gradient);
+    border: none;
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+.pagination .page-link {
+    border-radius: 8px;
+    margin: 0 3px;
+    border: none;
+}
+.pagination .page-item.active .page-link {
+    background: var(--primary-gradient);
+}
+.stat-card {
+    padding: 20px;
+    border-radius: 15px;
+    color: white;
+    margin-bottom: 20px;
+}
+.stat-card.total   { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.stat-card.running { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.stat-card.paused  { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.stat-card.blocked { background: linear-gradient(135deg, #1a1a2e 0%, #4a4a6a 100%); }
+.stat-card h3 { font-size: 2rem; font-weight: 700; margin-bottom: 5px; }
+.dropdown-menu {
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+.modal-content {
+    border-radius: 15px;
+}
+.nav-tabs .nav-link {
+    color: rgba(255,255,255,0.75);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+}
+.nav-tabs .nav-link.active {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-weight: 600;
+}
+.nav-tabs .nav-link:hover:not(.active) {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+.admin-badge {
+    font-size: 0.65rem;
+    vertical-align: middle;
+}
+.notify-card {
+    border-radius: 15px;
+    border: 1.5px solid #e8eaf0;
+    transition: box-shadow 0.2s;
+}
+.notify-card:hover {
+    box-shadow: 0 8px 30px rgba(102,126,234,0.13);
+}
+/* 推送配置左侧竖向 Tab */
+.notify-side-nav {
+    border-right: 1px solid #e8eaf0;
+    min-width: 130px;
+}
+.notify-side-nav .nav-link {
+    color: #555;
+    padding: 14px 20px;
+    border-radius: 0;
+    border-left: 3px solid transparent;
+    text-align: left;
+    font-size: 0.95rem;
+    background: none;
+}
+.notify-side-nav .nav-link:hover {
+    background: #f5f7fa;
+    color: #667eea;
+}
+.notify-side-nav .nav-link.active {
+    color: #667eea;
+    border-left: 3px solid #667eea;
+    background: #f0f3ff;
+    font-weight: 600;
+}
+.notify-form-label {
+    text-align: right;
+    padding-right: 12px;
+    color: #555;
+    font-size: 0.9rem;
+    line-height: 38px;
+}
+/* 推送配置左侧 Tab */
+.notify-tab-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    text-align: left;
+    font-size: 0.9rem;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.notify-tab-btn:hover {
+    background: #f0f4ff;
+    color: #667eea;
+}
+.notify-tab-btn.active {
+    border-left-color: #667eea;
+    color: #667eea;
+    font-weight: 600;
+    background: #f0f4ff;
+}
+/* 自定义轻量 Tooltip */
+#customTooltip {
+    position: fixed;
+    z-index: 99999;
+    background: #1a1a2e;
+    color: #fff;
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.12s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+#customTooltip.show { opacity: 1; }

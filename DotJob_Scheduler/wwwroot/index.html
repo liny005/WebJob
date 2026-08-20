@@ -6,199 +6,7 @@
     <title>WebJob任务调度平台</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        body {
-            background-color: #f5f7fa;
-            min-height: 100vh;
-        }
-        .navbar {
-            background: var(--primary-gradient) !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-        .main-content {
-            padding: 30px;
-        }
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-        }
-        .card-header {
-            background: white;
-            border-bottom: 1px solid #eee;
-            padding: 20px;
-            border-radius: 15px 15px 0 0 !important;
-        }
-        .table th {
-            border-top: none;
-            font-weight: 600;
-            color: #6c757d;
-        }
-        .badge-status {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-        .btn-action {
-            padding: 5px 10px;
-            border-radius: 8px;
-            margin: 0 2px;
-        }
-        .search-box {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-        }
-        .form-control, .form-select {
-            border-radius: 10px;
-            border: 2px solid #e1e1e1;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
-        .btn-primary {
-            background: var(--primary-gradient);
-            border: none;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-        .pagination .page-link {
-            border-radius: 8px;
-            margin: 0 3px;
-            border: none;
-        }
-        .pagination .page-item.active .page-link {
-            background: var(--primary-gradient);
-        }
-        .stat-card {
-            padding: 20px;
-            border-radius: 15px;
-            color: white;
-            margin-bottom: 20px;
-        }
-        .stat-card.total   { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .stat-card.running { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .stat-card.paused  { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .stat-card.blocked { background: linear-gradient(135deg, #1a1a2e 0%, #4a4a6a 100%); }
-        .stat-card h3 { font-size: 2rem; font-weight: 700; margin-bottom: 5px; }
-        .dropdown-menu {
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-        .modal-content {
-            border-radius: 15px;
-        }
-        .nav-tabs .nav-link {
-            color: rgba(255,255,255,0.75);
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px 8px 0 0;
-        }
-        .nav-tabs .nav-link.active {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            font-weight: 600;
-        }
-        .nav-tabs .nav-link:hover:not(.active) {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-        .admin-badge {
-            font-size: 0.65rem;
-            vertical-align: middle;
-        }
-        .notify-card {
-            border-radius: 15px;
-            border: 1.5px solid #e8eaf0;
-            transition: box-shadow 0.2s;
-        }
-        .notify-card:hover {
-            box-shadow: 0 8px 30px rgba(102,126,234,0.13);
-        }
-        /* 推送配置左侧竖向 Tab */
-        .notify-side-nav {
-            border-right: 1px solid #e8eaf0;
-            min-width: 130px;
-        }
-        .notify-side-nav .nav-link {
-            color: #555;
-            padding: 14px 20px;
-            border-radius: 0;
-            border-left: 3px solid transparent;
-            text-align: left;
-            font-size: 0.95rem;
-            background: none;
-        }
-        .notify-side-nav .nav-link:hover {
-            background: #f5f7fa;
-            color: #667eea;
-        }
-        .notify-side-nav .nav-link.active {
-            color: #667eea;
-            border-left: 3px solid #667eea;
-            background: #f0f3ff;
-            font-weight: 600;
-        }
-        .notify-form-label {
-            text-align: right;
-            padding-right: 12px;
-            color: #555;
-            font-size: 0.9rem;
-            line-height: 38px;
-        }
-        /* 推送配置左侧 Tab */
-        .notify-tab-btn {
-            display: block;
-            width: 100%;
-            padding: 14px 20px;
-            background: none;
-            border: none;
-            border-left: 3px solid transparent;
-            text-align: left;
-            font-size: 0.9rem;
-            color: #555;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .notify-tab-btn:hover {
-            background: #f0f4ff;
-            color: #667eea;
-        }
-        .notify-tab-btn.active {
-            border-left-color: #667eea;
-            color: #667eea;
-            font-weight: 600;
-            background: #f0f4ff;
-        }
-        /* 自定义轻量 Tooltip */
-        #customTooltip {
-            position: fixed;
-            z-index: 99999;
-            background: #1a1a2e;
-            color: #fff;
-            font-size: 0.78rem;
-            padding: 4px 10px;
-            border-radius: 6px;
-            pointer-events: none;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.12s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-        }
-        #customTooltip.show { opacity: 1; }
-    </style>
+    <link href="css/site.css?v=20260820a" rel="stylesheet">
 </head>
 <body>
     <!-- 导航栏 -->
@@ -269,520 +77,19 @@
 
     <!-- 主内容 -->
     <!-- ===== 任务列表 Tab ===== -->
-    <div id="panelJobs" class="main-content">
-        <!-- 统计卡片 -->
-        <div class="row">
-            <div class="col-md-3">
-                <div class="stat-card total">
-                    <h3 id="totalJobs">0</h3>
-                    <p class="mb-0"><i class="bi bi-list-task"></i> 任务总数</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card running">
-                    <h3 id="runningJobs">0</h3>
-                    <p class="mb-0"><i class="bi bi-play-circle"></i> 正常</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card paused">
-                    <h3 id="pausedJobs">0</h3>
-                    <p class="mb-0"><i class="bi bi-pause-circle"></i> 已暂停</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card blocked">
-                    <h3 id="blockedJobs">0</h3>
-                    <p class="mb-0"><i class="bi bi-slash-circle"></i> 阻塞</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 搜索区域 -->
-        <div class="search-box">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label">任务名称</label>
-                    <input type="text" class="form-control" id="searchJobName" placeholder="输入任务名称">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">任务分组</label>
-                    <input type="text" class="form-control" id="searchJobGroup" placeholder="输入分组名称">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">状态</label>
-                    <select class="form-select" id="searchTriggerState">
-                        <option value="">全部</option>
-                        <option value="1">正常</option>
-                        <option value="2">暂停</option>
-                        <option value="5">阻塞</option>
-                    </select>
-                </div>
-                <div class="col-md-4 text-end">
-                    <button class="btn btn-outline-secondary me-2" onclick="resetSearch()">
-                        <i class="bi bi-arrow-clockwise"></i> 重置
-                    </button>
-                    <button class="btn btn-primary me-2" onclick="searchJobs()">
-                        <i class="bi bi-search"></i> 搜索
-                    </button>
-                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addJobModal">
-                        <i class="bi bi-plus-lg"></i> 新增任务
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 任务列表 -->
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-list-task"></i> 任务列表</h5>
-                <div class="d-flex align-items-center gap-2">
-                    <!-- 自动刷新开关 -->
-                    <div class="d-flex align-items-center gap-1">
-                        <div class="form-check form-switch mb-0 me-1">
-                            <input class="form-check-input" type="checkbox" id="autoRefreshSwitch"
-                                   onchange="onAutoRefreshToggle()" style="cursor:pointer;">
-                            <label class="form-check-label text-muted small" for="autoRefreshSwitch">自动刷新</label>
-                        </div>
-                        <select class="form-select form-select-sm" id="autoRefreshInterval"
-                                style="width:90px;" onchange="onAutoRefreshToggle()" disabled>
-                            <option value="5">5 秒</option>
-                            <option value="10" selected>10 秒</option>
-                            <option value="30">30 秒</option>
-                            <option value="60">60 秒</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-outline-primary btn-sm" onclick="refreshJobs()">
-                        <i class="bi bi-arrow-clockwise"></i> 刷新
-                    </button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>任务名称</th>
-                                <th>分组</th>
-                                <th>状态</th>
-                                <th>触发方式</th>
-                                <th>上次计划时间</th>
-                                <th>下次计划时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="jobTableBody">
-                            <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">加载中...</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- 分页 -->
-                <nav aria-label="Page navigation" class="mt-3">
-                    <ul class="pagination justify-content-center" id="pagination">
-                    </ul>
-                </nav>
-            </div>
-        </div>
-
-    </div><!-- /panelJobs -->
+    <div id="panelJobs" class="main-content"></div><!-- /panelJobs -->
 
     <!-- ===== 操作日志 Tab ===== -->
-    <div id="panelAudit" class="main-content d-none">
-        <div class="search-box">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label">操作人</label>
-                    <input type="text" class="form-control" id="searchAuditOperator" placeholder="输入用户名">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">操作功能</label>
-                    <select class="form-select" id="searchAuditAction">
-                        <option value="">全部</option>
-                        <option value="用户登录">用户登录</option>
-                        <option value="新增任务">新增任务</option>
-                        <option value="修改任务">修改任务</option>
-                        <option value="删除任务">删除任务</option>
-                        <option value="暂停任务">暂停任务</option>
-                        <option value="恢复任务">恢复任务</option>
-                        <option value="立即执行">立即执行</option>
-                        <option value="新增用户">新增用户</option>
-                        <option value="删除用户">删除用户</option>
-                        <option value="新增推送配置">新增推送配置</option>
-                        <option value="修改推送配置">修改推送配置</option>
-                        <option value="删除推送配置">删除推送配置</option>
-                        <option value="测试推送配置">测试推送配置</option>
-                    </select>
-                </div>
-                <div class="col-md-6 text-end">
-                    <button class="btn btn-outline-secondary me-2" onclick="resetAuditSearch()">
-                        <i class="bi bi-arrow-clockwise"></i> 重置
-                    </button>
-                    <button class="btn btn-primary" onclick="searchAuditLogs()">
-                        <i class="bi bi-search"></i> 搜索
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-journal-check"></i> 操作日志</h5>
-                <button class="btn btn-outline-primary btn-sm" onclick="loadAuditLogs()">
-                    <i class="bi bi-arrow-clockwise"></i> 刷新
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>操作时间</th>
-                                <th>操作人</th>
-                                <th>操作功能</th>
-                                <th>操作对象</th>
-                                <th>备注</th>
-                            </tr>
-                        </thead>
-                        <tbody id="auditTableBody">
-                            <tr><td colspan="5" class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status"></div>
-                            </td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <nav class="mt-3">
-                    <ul class="pagination justify-content-center" id="auditPagination"></ul>
-                </nav>
-            </div>
-        </div>
-    </div><!-- /panelAudit -->
+    <div id="panelAudit" class="main-content d-none"></div><!-- /panelAudit -->
 
     <!-- ===== 用户管理 Tab (Admin Only) ===== -->
-    <div id="panelUsers" class="main-content d-none">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-people"></i> 用户管理</h5>
-                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                    <i class="bi bi-person-plus"></i> 新增用户
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>用户名</th>
-                                <th>显示名称</th>
-                                <th>角色</th>
-                                <th>状态</th>
-                                <th>创建时间</th>
-                                <th>最后登录</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="userTableBody">
-                            <tr><td colspan="7" class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status"></div>
-                            </td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- 用户分页 -->
-                <div class="d-flex justify-content-center mt-2 mb-1">
-                    <ul class="pagination pagination-sm mb-0" id="userPagination"></ul>
-                </div>
-            </div>
-        </div>
-    </div><!-- /panelUsers -->
+    <div id="panelUsers" class="main-content d-none"></div><!-- /panelUsers -->
 
     <!-- ===== 推送配置 Tab (Admin Only) ===== -->
-    <div id="panelNotify" class="main-content d-none">
-        <div class="card" style="border-radius:15px;overflow:hidden;min-height:360px;">
-            <div class="d-flex" style="min-height:360px;">
-
-                <!-- 左侧竖向渠道菜单 -->
-                <div class="notify-side-nav d-flex flex-column py-3">
-                    <a href="#" class="nav-link active" id="notifyTab_DingTalk"
-                       onclick="switchNotifyTab('DingTalk');return false;">
-                        钉钉配置
-                    </a>
-                    <a href="#" class="nav-link" id="notifyTab_Email"
-                       onclick="switchNotifyTab('Email');return false;">
-                        邮件配置
-                    </a>
-                    <a href="#" class="nav-link" id="notifyTab_Feishu"
-                       onclick="switchNotifyTab('Feishu');return false;">
-                        飞书配置
-                    </a>
-                </div>
-
-                <!-- 右侧配置区域 -->
-                <div class="flex-grow-1 p-5">
-                    <input type="hidden" id="notifyCurrentChannel" value="DingTalk">
-
-                    <!-- 加载中 -->
-                    <div id="notifyFormLoading" class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status"></div>
-                    </div>
-
-                    <!-- 内容区 -->
-                    <div id="notifyFormArea" class="d-none">
-
-                        <!-- ── 钉钉（可用） ── -->
-                        <div id="notifyForm_DingTalk" class="notify-channel-form">
-                            <div class="mb-4 row align-items-center">
-                                <div class="col-3 notify-form-label">Webhook 连接：</div>
-                                <div class="col-9">
-                                    <input type="text" class="form-control" id="dt_webhookUrl"
-                                           placeholder="如：https://oapi.dingtalk.com/robot/send?access_token=xxx">
-                                </div>
-                            </div>
-                            <div class="mb-4 row align-items-center">
-                                <div class="col-3 notify-form-label">加签密钥：</div>
-                                <div class="col-9">
-                                    <input type="password" class="form-control" id="dt_secret"
-                                           placeholder="如：SEC...（只支持加签推送）" autocomplete="new-password">
-                                </div>
-                            </div>
-                            <!-- 底部按钮 -->
-                            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                                <button class="btn btn-outline-secondary" onclick="testNotifyInline()">
-                                    <i class="bi bi-send"></i> 测试
-                                </button>
-                                <button class="btn btn-primary px-4" onclick="saveNotifyInline()">
-                                    确定
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- ── 飞书（暂未实现） ── -->
-                        <div id="notifyForm_Feishu" class="notify-channel-form d-none">
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-tools" style="font-size:3rem;opacity:.3;"></i>
-                                <p class="mt-3 mb-0 fs-6">飞书机器人推送暂未实现，敬请期待</p>
-                            </div>
-                        </div>
-
-                        <!-- ── 邮件（SMTP） ── -->
-                        <div id="notifyForm_Email" class="notify-channel-form d-none">
-                            <div class="mb-4 row align-items-center">
-                                <div class="col-3 notify-form-label">SMTP 服务器：</div>
-                                <div class="col-9">
-                                    <input type="text" class="form-control" id="email_smtpHost"
-                                           placeholder="如：smtp.163.com / smtp.qq.com / smtp.gmail.com">
-                                </div>
-                            </div>
-                            <div class="mb-4 row align-items-center">
-                                <div class="col-3 notify-form-label">端口：</div>
-                                <div class="col-4">
-                                    <input type="number" class="form-control" id="email_smtpPort" value="465" min="1" max="65535">
-                                </div>
-                                <div class="col-5 d-flex align-items-center gap-3 ps-3">
-                                    <div class="form-check form-switch mb-0">
-                                        <input class="form-check-input" type="checkbox" id="email_useSsl" checked>
-                                        <label class="form-check-label" for="email_useSsl">SSL 加密</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-4 row align-items-center">
-                                <div class="col-3 notify-form-label">发件人账号：</div>
-                                <div class="col-9">
-                                    <input type="email" class="form-control" id="email_username"
-                                           placeholder="如：your@163.com">
-                                </div>
-                            </div>
-                            <div class="mb-4 row align-items-center">
-                                <div class="col-3 notify-form-label">授权码/密码：</div>
-                                <div class="col-9">
-                                    <input type="password" class="form-control" id="email_password"
-                                           placeholder="邮箱授权码（非登录密码）">
-                                </div>
-                            </div>
-                            <div class="mb-4 row align-items-center">
-                                <div class="col-3 notify-form-label">发件人名称：</div>
-                                <div class="col-9">
-                                    <input type="text" class="form-control" id="email_fromName"
-                                           placeholder="如：DotJob 调度系统（可选）">
-                                </div>
-                            </div>
-                            <div class="mb-4 row align-items-center">
-                                <div class="col-3 notify-form-label">收件人：</div>
-                                <div class="col-9">
-                                    <input type="text" class="form-control" id="email_to"
-                                           placeholder="多个收件人用英文逗号分隔，如：a@x.com,b@x.com">
-                                </div>
-                            </div>
-                            <!-- 底部按钮 -->
-                            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                                <button class="btn btn-outline-secondary" onclick="testNotifyInline()">
-                                    <i class="bi bi-send"></i> 测试
-                                </button>
-                                <button class="btn btn-primary px-4" onclick="saveNotifyInline()">
-                                    确定
-                                </button>
-                            </div>
-                        </div>
-
-                    </div><!-- /notifyFormArea -->
-                </div><!-- /right -->
-            </div><!-- /flex -->
-        </div><!-- /card -->
-    </div><!-- /panelNotify -->
+    <div id="panelNotify" class="main-content d-none"></div><!-- /panelNotify -->
 
     <!-- ===== 系统监控 Tab ===== -->
-    <div id="panelMonitor" class="main-content d-none">
-        <!-- 系统监控统计卡片 -->
-        <div class="row">
-            <div class="col-md-3">
-                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <h3 id="cpuUsage">--</h3>
-                    <p class="mb-0"><i class="bi bi-cpu"></i> CPU 使用率</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                    <h3 id="memoryUsage">--</h3>
-                    <p class="mb-0"><i class="bi bi-memory"></i> 内存占用</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                    <h3 id="threadCount">--</h3>
-                    <p class="mb-0"><i class="bi bi-diagram-3"></i> 活跃线程</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
-                    <h3 id="avgLatency">--</h3>
-                    <p class="mb-0"><i class="bi bi-hourglass-split"></i> 平均延迟</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 历史趋势图表 -->
-        <div class="row mt-4">
-            <!-- CPU 趋势 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-cpu"></i> CPU 使用率趋势</h5>
-                    </div>
-                    <div class="card-body" style="height: 300px;">
-                        <canvas id="cpuChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 内存趋势 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-memory"></i> 内存占用趋势</h5>
-                    </div>
-                    <div class="card-body" style="height: 300px;">
-                        <canvas id="memoryChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 线程和延迟趋势 -->
-        <div class="row mt-4">
-            <!-- 活跃线程趋势 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-diagram-3"></i> 活跃线程趋势</h5>
-                    </div>
-                    <div class="card-body" style="height: 300px;">
-                        <canvas id="threadChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 平均延迟趋势 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-hourglass-split"></i> 平均延迟趋势</h5>
-                    </div>
-                    <div class="card-body" style="height: 300px;">
-                        <canvas id="latencyChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 详细监控数据 -->
-        <div class="row mt-4">
-            <!-- 内存详情 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-memory"></i> 内存信息</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">托管内存</p>
-                                <h5 id="managedMemory">-- MB</h5>
-                            </div>
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">工作集</p>
-                                <h5 id="workingSet">-- MB</h5>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">堆大小</p>
-                                <h5 id="heapSize">-- MB</h5>
-                            </div>
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">GC 回收次数 (Gen2)</p>
-                                <h5 id="gen2Collections">--</h5>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 任务执行延迟统计 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-hourglass-split"></i> 任务延迟统计</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">平均延迟</p>
-                                <h5 id="jobAvgLatency">-- ms</h5>
-                            </div>
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">最大延迟</p>
-                                <h5 id="jobMaxLatency">-- ms</h5>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">最小延迟</p>
-                                <h5 id="jobMinLatency">-- ms</h5>
-                            </div>
-                            <div class="col-6">
-                                <p class="text-muted small mb-1">执行总数</p>
-                                <h5 id="jobExecutions">--</h5>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div><!-- /panelMonitor -->
+    <div id="panelMonitor" class="main-content d-none"></div><!-- /panelMonitor -->
 
     <!-- 新增用户模态框 -->
     <div class="modal fade" id="addUserModal" tabindex="-1">
@@ -1141,6 +448,41 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="row g-2 mb-3 align-items-end">
+                        <div class="col-md-2 col-6">
+                            <label class="form-label small text-muted mb-1">执行状态</label>
+                            <select class="form-select form-select-sm" id="logSearchStatus">
+                                <option value="">全部</option>
+                                <option value="success">成功</option>
+                                <option value="failure">失败</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 col-6">
+                            <label class="form-label small text-muted mb-1">状态码</label>
+                            <select class="form-select form-select-sm" id="logSearchStatusCode">
+                                <option value="">全部</option>
+                                <option value="2xx">2xx</option>
+                                <option value="4xx">4xx</option>
+                                <option value="5xx">5xx</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small text-muted mb-1">开始时间</label>
+                            <input type="datetime-local" class="form-control form-control-sm" id="logSearchStartTime">
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small text-muted mb-1">结束时间</label>
+                            <input type="datetime-local" class="form-control form-control-sm" id="logSearchEndTime">
+                        </div>
+                        <div class="col-md-2 col-12 d-flex gap-2">
+                            <button type="button" class="btn btn-primary btn-sm flex-fill" onclick="searchLogs()">
+                                <i class="bi bi-search"></i> 查询
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="resetLogSearch()">
+                                <i class="bi bi-x-circle"></i> 重置
+                            </button>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-sm table-hover">
                             <thead>
@@ -1242,7 +584,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="js/app.js?v=20260811a"></script>
+    <script src="js/app.js?v=20260820c"></script>
     <!-- 自定义轻量 Tooltip -->
     <div id="customTooltip"></div>
 </body>
