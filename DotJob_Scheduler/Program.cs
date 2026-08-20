@@ -20,8 +20,8 @@ builder.Services.AddQuartz(q =>
     q.SchedulerName = AppConfig.SchedulerName;
     q.SchedulerId = "AUTO";
 
-    q.UseDefaultThreadPool(tp => tp.MaxConcurrency = 300);
-    q.MaxBatchSize = 300;
+    q.UseDefaultThreadPool(tp => tp.MaxConcurrency = AppConfig.MaxConcurrency);
+    q.MaxBatchSize = AppConfig.MaxBatchSize;
 
     q.UsePersistentStore(store =>
     {
@@ -29,7 +29,7 @@ builder.Services.AddQuartz(q =>
         store.RetryInterval = TimeSpan.FromSeconds(15);
 
         // 单机部署不需要集群
-        //store.UseClustering();
+        store.UseClustering();
 
         store.UseMySql(db =>
         {

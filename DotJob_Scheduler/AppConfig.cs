@@ -22,15 +22,29 @@ public static class AppConfig
     public static string SchedulerName { get; set; } = "jobScheduler";
 
     /// <summary>
+    /// 线程池最大并发数
+    /// </summary>
+    public static int MaxConcurrency { get; set; } = 300;
+
+    /// <summary>
+    /// 每批最多获取的待触发任务数
+    /// </summary>
+    public static int MaxBatchSize { get; set; } = 300;
+
+    /// <summary>
     /// 从配置文件初始化
     /// </summary>
     public static void Initialize(IConfiguration configuration)
     {
         ConnectionString = configuration.GetConnectionString("MysqlConnection") ?? string.Empty;
-        
+
         // 可以从配置文件读取 DbProviderName，默认使用 MySql
         DbProviderName = configuration.GetValue<string>("Quartz:DbProviderName") ?? "MySql";
-        
+
         SchedulerName = configuration.GetValue<string>("Quartz:SchedulerName") ?? "jobScheduler";
+
+        MaxConcurrency = configuration.GetValue<int?>("Quartz:MaxConcurrency") ?? 300;
+
+        MaxBatchSize = configuration.GetValue<int?>("Quartz:MaxBatchSize") ?? 300;
     }
 }
