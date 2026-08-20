@@ -33,7 +33,7 @@ public class MonitorService : BackgroundService
     private static MonitorSnapshot? _latest;
     private static readonly object _lock = new();
 
-    private static readonly int MaxHistorySize = 2160; // 6小时，每10秒一条
+    private static readonly int MaxHistorySize = 360; // 3小时，每30秒一条
 
     private DateTime _lastCheckTime = DateTime.Now;
     private TimeSpan _lastCpuTime = Process.GetCurrentProcess().TotalProcessorTime;
@@ -68,7 +68,7 @@ public class MonitorService : BackgroundService
                 // 采集失败不影响服务运行
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }
 

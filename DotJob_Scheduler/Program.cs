@@ -29,7 +29,7 @@ builder.Services.AddQuartz(q =>
         store.RetryInterval = TimeSpan.FromSeconds(15);
 
         // 单机部署不需要集群
-        // store.UseClustering();
+        store.UseClustering();
 
         store.UseMySql(db =>
         {
@@ -115,4 +115,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-

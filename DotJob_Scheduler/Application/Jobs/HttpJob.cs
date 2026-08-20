@@ -5,12 +5,10 @@ using Quartz;
 
 namespace Job_Scheduler.Application.Jobs;
 
-// JobDataMap 不再存储业务数据，所有配置通过 JOB_CONFIG 表读取（JobBase.Execute 中加载并暴露为 JobConfig）
-//
-// ⚠️ 不使用 [DisallowConcurrentExecution]：
-// 该属性会导致 Quartz AdoJobStore 在批量获取触发器时，对每个 Job 行加行锁（SELECT ... FOR UPDATE），
-// 20 个任务时触发器获取就会被序列化，产生 20s+ 的排队延迟。
-// HTTP 调用是无状态的，同一个任务的两次触发互不影响，无需禁止并发。
+
+/// <summary>
+/// http 执行
+/// </summary>
 [DisallowConcurrentExecution]
 public class HttpJob : JobBase, IJob
 {

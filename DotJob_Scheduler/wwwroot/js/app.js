@@ -2163,7 +2163,7 @@ function initCharts() {
 
 async function loadHistoryData() {
     try {
-        const response = await fetch('/api/monitor/history?minutes=60');
+        const response = await fetch('/api/monitor/history?minutes=180');
         if (!response.ok) throw new Error('获取历史数据失败');
 
         const result = await response.json();
@@ -2261,7 +2261,7 @@ function startMonitorAutoRefresh() {
     }
     initCharts();
     refreshMonitor();
-    monitorRefreshTimer = setInterval(() => { refreshMonitor(); }, 10000);
+    monitorRefreshTimer = setInterval(() => { refreshMonitor(); }, 30000);
 }
 
 function stopMonitorRefresh() {
