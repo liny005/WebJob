@@ -9,7 +9,7 @@ namespace Job_Scheduler.Application.Jobs;
 /// <summary>
 /// http 执行
 /// </summary>
-[DisallowConcurrentExecution]
+// [DisallowConcurrentExecution]
 public class HttpJob : JobBase, IJob
 {
     public HttpJob(LogEntity logInfo, IServiceProvider serviceProvider)
