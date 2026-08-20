@@ -10,6 +10,7 @@ let logCurrentPage = 1;
 let logPageSize = 20;
 let autoRefreshTimer = null;  // 自动刷新定时器
 let currentUser = null;       // 当前登录用户信息
+let currentTab = 'jobs';      // 当前激活 tab
 
 // 审计日志分页
 let auditCurrentPage = 1;
@@ -67,6 +68,57 @@ document.addEventListener('DOMContentLoaded', function() {
             e.stopImmediatePropagation();
         }
     }, true); // capture 阶段拦截，优先于 Bootstrap 处理
+
+    // ── 模态框关闭时清空表单数据 ──
+    // 新增任务模态框
+    const addJobModal = document.getElementById('addJobModal');
+    if (addJobModal) {
+        addJobModal.addEventListener('hidden.bs.modal', () => {
+            document.getElementById('addJobForm').reset();
+            // 重新设置开始时间默认值为当前时间
+            const now = new Date();
+            document.getElementById('beginTime').value =
+                new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            // 重置触发器类型显示
+            toggleTriggerOptions();
+        });
+    }
+
+    // 新增用户模态框
+    const addUserModal = document.getElementById('addUserModal');
+    if (addUserModal) {
+        addUserModal.addEventListener('hidden.bs.modal', () => {
+            document.getElementById('addUserForm').reset();
+        });
+    }
+
+    // 新增推送配置模态框
+    const addNotifyModal = document.getElementById('addNotifyModal');
+    if (addNotifyModal) {
+        addNotifyModal.addEventListener('hidden.bs.modal', () => {
+            document.getElementById('addNotifyForm').reset();
+            document.getElementById('notifyConfig').value = '';
+            document.getElementById('notifyConfigHint').textContent = '';
+        });
+    }
+
+    // 编辑推送配置模态框
+    const editNotifyModal = document.getElementById('editNotifyModal');
+    if (editNotifyModal) {
+        editNotifyModal.addEventListener('hidden.bs.modal', () => {
+            document.getElementById('editNotifyForm').reset();
+            document.getElementById('editNotifyConfig').value = '';
+            document.getElementById('editNotifyConfigHint').textContent = '';
+        });
+    }
+
+    // 修改密码模态框
+    const changePasswordModal = document.getElementById('changePasswordModal');
+    if (changePasswordModal) {
+        changePasswordModal.addEventListener('hidden.bs.modal', () => {
+            document.getElementById('changePasswordForm').reset();
+        });
+    }
 });
 
 // 自动刷新开关切换
@@ -78,8 +130,9 @@ function onAutoRefreshToggle() {
         clearInterval(autoRefreshTimer);
         autoRefreshTimer = null;
     }
-    if (sw.checked) {
-        const seconds = Math.max(5, parseInt(sel.value) || 10);
+    if (sw.checked && currentTab === 'jobs') {
+        const seconds = Math.max(10, parseInt(sel.value) || 10);
+        loadJobs(); // 立即刷新一次，不等第一个 interval
         autoRefreshTimer = setInterval(() => { loadJobs(); }, seconds * 1000);
     }
 }
@@ -89,6 +142,30 @@ window.addEventListener('beforeunload', function() {
     if (autoRefreshTimer) {
         clearInterval(autoRefreshTimer);
         autoRefreshTimer = null;
+    }
+});
+
+// 切换到后台标签页时暂停所有轮询，切回来时仅恢复监控刷新
+// （任务列表自动刷新：离开时已默认关闭，切回后需用户手动开启）
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+            autoRefreshTimer = null;
+        }
+        stopMonitorRefresh();
+    } else {
+        if (currentTab === 'monitor') {
+            startMonitorAutoRefresh();
+        } else if (currentTab === 'jobs') {
+            const sw = document.getElementById('autoRefreshSwitch');
+            if (sw?.checked) {
+                const sel = document.getElementById('autoRefreshInterval');
+                const seconds = Math.max(10, parseInt(sel?.value) || 10);
+                loadJobs();
+                autoRefreshTimer = setInterval(() => { loadJobs(); }, seconds * 1000);
+            }
+        }
     }
 });
 
@@ -120,6 +197,18 @@ async function checkAuth() {
 
 // 切换 Tab
 function switchTab(tab) {
+    currentTab = tab;
+
+    // 离开任务列表：默认关闭自动刷新开关，切回后需手动开启
+    if (tab !== 'jobs') {
+        const sw = document.getElementById('autoRefreshSwitch');
+        if (sw?.checked) {
+            sw.checked = false;
+            const sel = document.getElementById('autoRefreshInterval');
+            if (sel) sel.disabled = true;
+        }
+    }
+
     // 隐藏所有面板
     document.getElementById('panelJobs').classList.add('d-none');
     document.getElementById('panelAudit').classList.add('d-none');
@@ -130,12 +219,17 @@ function switchTab(tab) {
     // 取消所有 tab 激活状态
     document.querySelectorAll('#mainTabs .nav-link').forEach(el => el.classList.remove('active'));
 
-    // 停止监控自动刷新
+    // 停止所有自动刷新
     stopMonitorRefresh();
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+    }
 
     if (tab === 'jobs') {
         document.getElementById('panelJobs').classList.remove('d-none');
         document.querySelector('#mainTabs .nav-item:nth-child(1) .nav-link').classList.add('active');
+        // 不自动恢复自动刷新，需用户手动开启
     } else if (tab === 'audit') {
         document.getElementById('panelAudit').classList.remove('d-none');
         document.querySelector('#tabAuditLog .nav-link').classList.add('active');
@@ -2027,7 +2121,7 @@ function startMonitorAutoRefresh() {
     }
     initCharts();
     refreshMonitor();
-    monitorRefreshTimer = setInterval(() => { refreshMonitor(); }, 5000);
+    monitorRefreshTimer = setInterval(() => { refreshMonitor(); }, 10000);
 }
 
 function stopMonitorRefresh() {
