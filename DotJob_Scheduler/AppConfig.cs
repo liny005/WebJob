@@ -24,12 +24,12 @@ public static class AppConfig
     /// <summary>
     /// 线程池最大并发数
     /// </summary>
-    public static int MaxConcurrency { get; set; } = 300;
+    public static int MaxConcurrency { get; set; } = 100;
 
     /// <summary>
     /// 每批最多获取的待触发任务数
     /// </summary>
-    public static int MaxBatchSize { get; set; } = 300;
+    public static int MaxBatchSize { get; set; } = 100;
 
     /// <summary>
     /// 从配置文件初始化

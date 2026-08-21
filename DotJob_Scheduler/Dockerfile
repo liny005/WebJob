@@ -23,6 +23,7 @@ COPY --from=build /src/scripts/init_database.sql .
 
 # 容器内监听 8080 端口（.NET 8+ 官方镜像默认端口）
 ENV ASPNETCORE_HTTP_PORTS=8080
+ENV TZ=Asia/Shanghai
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "DotJob_Scheduler.dll"]

@@ -38,9 +38,9 @@ public abstract class JobBase : IDisposable
         var entryTime = DateTime.Now;
 
         // 诊断：排队延迟
-        var scheduledTime   = context.ScheduledFireTimeUtc?.LocalDateTime;
-        var threadEntryLag  = scheduledTime.HasValue ? (entryTime - scheduledTime.Value).TotalSeconds : -1;
-        Console.WriteLine($"[SLOW] {fullJobName} | 计划={scheduledTime:HH:mm:ss} 实际进入={entryTime:HH:mm:ss} | 排队延迟={threadEntryLag:F1}s | 线程={Environment.CurrentManagedThreadId}");
+        // var scheduledTime   = context.ScheduledFireTimeUtc?.LocalDateTime;
+        // var threadEntryLag  = scheduledTime.HasValue ? (entryTime - scheduledTime.Value).TotalSeconds : -1;
+        // Console.WriteLine($"[SLOW] {fullJobName} | 计划={scheduledTime:HH:mm:ss} 实际进入={entryTime:HH:mm:ss} | 排队延迟={threadEntryLag:F1}s | 线程={Environment.CurrentManagedThreadId}");
 
         // 1. 从 JOB_CONFIG 加载任务配置
         JobConfig = await LoadJobConfigAsync(jobGroup, jobName);
