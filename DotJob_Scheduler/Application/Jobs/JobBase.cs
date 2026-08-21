@@ -4,7 +4,7 @@ using DotJob_Model.Enums;
 using Host;
 using Job_Scheduler.Application.Notify;
 using Microsoft.Extensions.DependencyInjection;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using Quartz;
 
 namespace Job_Scheduler.Application.Jobs;

@@ -1,4 +1,4 @@
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using System.Diagnostics;
 
 namespace Job_Scheduler.Application.Monitor;

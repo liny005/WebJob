@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using DotJob_Model.Entity;
 using DotJob_Model.Auth;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 
 namespace Job_Scheduler.Application.User;
 

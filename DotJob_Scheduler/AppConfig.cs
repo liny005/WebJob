@@ -7,9 +7,9 @@ public static class AppConfig
 {
     /// <summary>
     /// 数据库提供程序名称
-    /// 支持: SQLite, SQLite-Microsoft, MySql, SqlServer, SQLServerMOT, Npgsql, OracleODPManaged, Firebird
+    /// 支持: SQLite, SQLite-Microsoft, MySql, MySqlConnector, SqlServer, SQLServerMOT, Npgsql, OracleODPManaged, Firebird
     /// </summary>
-    public static string DbProviderName { get; set; } = "MySql";
+    public static string DbProviderName { get; set; } = "MySqlConnector";
 
     /// <summary>
     /// 数据库连接字符串
@@ -39,7 +39,7 @@ public static class AppConfig
         ConnectionString = configuration.GetConnectionString("MysqlConnection") ?? string.Empty;
 
         // 可以从配置文件读取 DbProviderName，默认使用 MySql
-        DbProviderName = configuration.GetValue<string>("Quartz:DbProviderName") ?? "MySql";
+        DbProviderName = configuration.GetValue<string>("Quartz:DbProviderName") ?? "MySqlConnector";
 
         SchedulerName = configuration.GetValue<string>("Quartz:SchedulerName") ?? "jobScheduler";
 

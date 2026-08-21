@@ -31,7 +31,7 @@ builder.Services.AddQuartz(q =>
         // 单机部署不需要集群
         store.UseClustering();
 
-        store.UseMySql(db =>
+        store.UseMySqlConnector(db =>
         {
             db.ConnectionString = AppConfig.ConnectionString;
             db.TablePrefix = "QRTZ_";

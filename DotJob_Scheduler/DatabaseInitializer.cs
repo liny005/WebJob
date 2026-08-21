@@ -1,4 +1,4 @@
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 
 namespace Job_Scheduler;
 
@@ -62,16 +62,29 @@ public static class DatabaseInitializer
             await using var appConn = new MySqlConnection(connectionString);
             await appConn.OpenAsync();
 
-            var script = new MySqlScript(appConn, sql);
-            script.Error += (_, args) =>
-            {
-                if (args.Exception is MySqlException { Number: 1062 }) // ER_DUP_ENTRY
-                    args.Ignore = true;
-                else
-                    logger.LogWarning("[DB Init] SQL 执行警告: {Message}", args.Exception.Message);
-            };
+            var statements = sql
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(s => !string.IsNullOrWhiteSpace(s));
 
-            var count = await script.ExecuteAsync();
+            int count = 0;
+            foreach (var statement in statements)
+            {
+                try
+                {
+                    await using var cmd = appConn.CreateCommand();
+                    cmd.CommandText = statement;
+                    await cmd.ExecuteNonQueryAsync();
+                    count++;
+                }
+                catch (MySqlException ex) when (ex.Number == 1062) // ER_DUP_ENTRY
+                {
+                    // 忽略重复数据，幂等执行
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning("[DB Init] SQL 执行警告: {Message}", ex.Message);
+                }
+            }
             logger.LogInformation("[DB Init] 初始化完成，共执行 {Count} 条语句", count);
         }
         catch (Exception ex)

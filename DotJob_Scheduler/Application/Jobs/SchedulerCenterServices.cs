@@ -2,7 +2,7 @@ using DotJob_Model;
 using DotJob_Model.Entity;
 using DotJob_Model.WebJobs;
 using Host.Common;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using Quartz;
 using Quartz.Impl.Matchers;
 

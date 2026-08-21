@@ -1,5 +1,5 @@
 using DotJob_Model.Entity;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 
 namespace Job_Scheduler.Application.User;
 
