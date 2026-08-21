@@ -43,8 +43,8 @@ public static class AppConfig
 
         SchedulerName = configuration.GetValue<string>("Quartz:SchedulerName") ?? "jobScheduler";
 
-        MaxConcurrency = configuration.GetValue<int?>("Quartz:MaxConcurrency") ?? 300;
+        MaxConcurrency = configuration.GetValue<int?>("Quartz:MaxConcurrency") ?? 100;
 
-        MaxBatchSize = configuration.GetValue<int?>("Quartz:MaxBatchSize") ?? 300;
+        MaxBatchSize = configuration.GetValue<int?>("Quartz:MaxBatchSize") ?? 100;
     }
 }
