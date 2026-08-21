@@ -37,41 +37,37 @@ public abstract class JobBase : IDisposable
 
         var entryTime = DateTime.Now;
 
-        // 诊断：排队延迟
-        // var scheduledTime   = context.ScheduledFireTimeUtc?.LocalDateTime;
-        // var threadEntryLag  = scheduledTime.HasValue ? (entryTime - scheduledTime.Value).TotalSeconds : -1;
-        // Console.WriteLine($"[SLOW] {fullJobName} | 计划={scheduledTime:HH:mm:ss} 实际进入={entryTime:HH:mm:ss} | 排队延迟={threadEntryLag:F1}s | 线程={Environment.CurrentManagedThreadId}");
-
-        // 1. 从 JOB_CONFIG 加载任务配置
-        JobConfig = await LoadJobConfigAsync(jobGroup, jobName);
-
-        // 判断是否为手动触发，手动触发时跳过结束时间与次数限制
-        var isManualTrigger = context.MergedJobDataMap.TryGetValue("manual_trigger", out var manualFlag)
-                              && manualFlag?.ToString() == "true";
-
-        // 2. 结束时间检查（手动触发时跳过）
-        if (!isManualTrigger && JobConfig?.EndTime != null && JobConfig.EndTime.Value <= DateTime.Now)
+        // 1 & 2. 前置查询：加载配置 + 次数检查，共用一个连接，HTTP 调用前释放
+        await using (var preSession = new DbSession(AppConfig.ConnectionString))
         {
-            await context.Scheduler.PauseJob(new JobKey(jobName, jobGroup));
-            return;
-        }
+            var conn = await preSession.GetAsync();
+            JobConfig = await LoadJobConfigAsync(conn, jobGroup, jobName);
 
-        // 3. 执行次数上限检查（手动触发时跳过）
-        if (!isManualTrigger && JobConfig?.RunTotal is > 0)
-        {
-            var executedCount = await CountLogsAsync(fullJobName);
-            if (executedCount >= JobConfig.RunTotal.Value)
+            var isManualTrigger = context.MergedJobDataMap.TryGetValue("manual_trigger", out var manualFlag)
+                                  && manualFlag?.ToString() == "true";
+
+            if (!isManualTrigger && JobConfig?.EndTime != null && JobConfig.EndTime.Value <= DateTime.Now)
             {
                 await context.Scheduler.PauseJob(new JobKey(jobName, jobGroup));
                 return;
             }
-        }
 
-        // 4. 通知级别
+            if (!isManualTrigger && JobConfig?.RunTotal is > 0)
+            {
+                var executedCount = await CountLogsAsync(conn, fullJobName);
+                if (executedCount >= JobConfig.RunTotal.Value)
+                {
+                    await context.Scheduler.PauseJob(new JobKey(jobName, jobGroup));
+                    return;
+                }
+            }
+        } // 连接归还连接池，HTTP 调用期间不占用
+
+        // 3. 通知级别
         MailLevel = (NoticeEnum)(JobConfig?.MailMessage ?? 0);
         Dingtalk  = (NoticeEnum)(JobConfig?.Dingtalk    ?? 0);
 
-        // 5. 填充日志基本信息
+        // 4. 填充日志基本信息
         LogInfo.BeginTime       = entryTime;
         LogInfo.JobName         = fullJobName;
         LogInfo.JobGroup        = jobGroup;
@@ -96,7 +92,10 @@ public abstract class JobBase : IDisposable
             _stopwatch.Stop();
             LogInfo.EndTime     = DateTime.Now;
             LogInfo.ExecuteTime = _stopwatch.Elapsed.TotalSeconds;
-            await SaveLogAsync();
+
+            // 5. 写日志（独立会话）
+            await using var logSession = new DbSession(AppConfig.ConnectionString);
+            await SaveLogAsync(await logSession.GetAsync());
 
             // 6. 统一发送通知（钉钉 + 邮件）
             await SendNotificationsAsync(fullJobName);
@@ -157,12 +156,10 @@ public abstract class JobBase : IDisposable
     /// <summary>
     /// 从 JOB_CONFIG 表加载任务配置（短连接，用完立即释放回连接池）
     /// </summary>
-    private static async Task<JobConfig?> LoadJobConfigAsync(string jobGroup, string jobName)
+    private static async Task<JobConfig?> LoadJobConfigAsync(MySqlConnection conn, string jobGroup, string jobName)
     {
         try
         {
-            await using var conn = new MySqlConnection(AppConfig.ConnectionString);
-            await conn.OpenAsync();
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT * FROM JOB_CONFIG WHERE JOB_NAME = @jobName AND JOB_GROUP = @jobGroup LIMIT 1";
             cmd.Parameters.AddWithValue("@jobName", jobName);
@@ -217,12 +214,10 @@ public abstract class JobBase : IDisposable
     }
 
     /// <summary>统计已执行次数（短连接）</summary>
-    private static async Task<long> CountLogsAsync(string jobName)
+    private static async Task<long> CountLogsAsync(MySqlConnection conn, string jobName)
     {
         try
         {
-            await using var conn = new MySqlConnection(AppConfig.ConnectionString);
-            await conn.OpenAsync();
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT COUNT(*) FROM JOB_LOG WHERE JOB_NAME = @jobName";
             cmd.Parameters.AddWithValue("@jobName", jobName);
@@ -237,13 +232,10 @@ public abstract class JobBase : IDisposable
     }
 
     /// <summary>执行完毕后一次性写入完整日志（短连接）</summary>
-    private async Task SaveLogAsync()
+    private async Task SaveLogAsync(MySqlConnection conn)
     {
         try
         {
-            await using var conn = new MySqlConnection(AppConfig.ConnectionString);
-            await conn.OpenAsync();
-
             const string sql = @"INSERT INTO JOB_LOG
                 (BEGIN_TIME, END_TIME, JOB_NAME, JOB_GROUP, ERROR_MSG, EXECUTE_TIME, EXECUTION_STATUS, URL, REQUEST_TYPE, PARAMETERS, RESULT, STATUS_CODE)
                 VALUES
