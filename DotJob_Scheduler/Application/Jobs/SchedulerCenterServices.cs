@@ -470,7 +470,29 @@ LIMIT @offset, @size";
             PageInfo = new PageInfo { Total = total, PageSize = pageSize, PageNumber = pageNumber }
         };
     }
-    
+
+    /// <summary>
+    /// 查询任务执行延迟统计（基于最近 1000 次执行），用于首页统计卡片
+    /// </summary>
+    /// <returns>平均延迟与最大延迟（毫秒），无执行记录时均为 0</returns>
+    public async Task<(long AvgLatencyMs, long MaxLatencyMs)> QueryLatencyStatsAsync()
+    {
+        await using var conn = new MySqlConnection(AppConfig.ConnectionString);
+        await conn.OpenAsync();
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT AVG(EXECUTE_TIME) * 1000, MAX(EXECUTE_TIME) * 1000
+                             FROM (SELECT EXECUTE_TIME FROM JOB_LOG
+                                   WHERE EXECUTE_TIME > 0
+                                   ORDER BY BEGIN_TIME DESC LIMIT 1000) t";
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync() || reader.IsDBNull(0))
+            return (0, 0);
+
+        return ((long)Math.Round(reader.GetDouble(0)), (long)Math.Round(reader.GetDouble(1)));
+    }
+
     /// <summary>
     /// 获取任务详情（组合 JOB_CONFIG 与 Quartz Trigger 信息）
     /// </summary>

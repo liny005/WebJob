@@ -1,7 +1,6 @@
 using DotJob_Core.DateTimeExtend;
 using Job_Scheduler;
 using Job_Scheduler.Application.Jobs;
-using Job_Scheduler.Application.Monitor;
 using Job_Scheduler.Application.Notify;
 using Job_Scheduler.Application.User;
 using Job_Scheduler.Filters;
@@ -74,7 +73,6 @@ builder.Services.AddAuthorization();
 
 // 注册服务
 builder.Services.AddSingleton<SchedulerCenterServices>();
-builder.Services.AddHostedService<MonitorService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuditLogService>();
 builder.Services.AddScoped<DingTalkService>();

@@ -37,8 +37,7 @@ const partialMap = {
     jobs:    'partials/jobs.html',
     audit:   'partials/audit.html',
     users:   'partials/users.html',
-    notify:  'partials/notify.html',
-    monitor: 'partials/monitor.html'
+    notify:  'partials/notify.html'
 };
 
 // 加载指定 Tab 的 partial HTML（未加载过时）
@@ -50,7 +49,7 @@ async function loadPartial(tab) {
 
     try {
         panel.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
-        const response = await fetch(path + '?v=20260820a');
+        const response = await fetch(path + '?v=20260828a');
         if (!response.ok) throw new Error('加载失败: ' + response.status);
         panel.innerHTML = await response.text();
         loadedPartials.add(tab);
@@ -196,7 +195,7 @@ window.addEventListener('beforeunload', function() {
     }
 });
 
-// 切换到后台标签页时暂停所有轮询，切回来时仅恢复监控刷新
+// 切换到后台标签页时暂停轮询，切回来时恢复任务列表自动刷新
 // （任务列表自动刷新：离开时已默认关闭，切回后需用户手动开启）
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
@@ -204,11 +203,8 @@ document.addEventListener('visibilitychange', function() {
             clearInterval(autoRefreshTimer);
             autoRefreshTimer = null;
         }
-        stopMonitorRefresh();
     } else {
-        if (currentTab === 'monitor') {
-            startMonitorAutoRefresh();
-        } else if (currentTab === 'jobs') {
+        if (currentTab === 'jobs') {
             const sw = document.getElementById('autoRefreshSwitch');
             if (sw?.checked) {
                 const sel = document.getElementById('autoRefreshInterval');
@@ -265,13 +261,11 @@ async function switchTab(tab) {
     document.getElementById('panelAudit').classList.add('d-none');
     document.getElementById('panelUsers').classList.add('d-none');
     document.getElementById('panelNotify').classList.add('d-none');
-    document.getElementById('panelMonitor')?.classList.add('d-none');
 
     // 取消所有 tab 激活状态
     document.querySelectorAll('#mainTabs .nav-link').forEach(el => el.classList.remove('active'));
 
-    // 停止所有自动刷新
-    stopMonitorRefresh();
+    // 停止自动刷新
     if (autoRefreshTimer) {
         clearInterval(autoRefreshTimer);
         autoRefreshTimer = null;
@@ -296,10 +290,6 @@ async function switchTab(tab) {
         document.getElementById('panelNotify').classList.remove('d-none');
         document.querySelector('#tabNotifyConfig .nav-link').classList.add('active');
         loadNotifyConfigs();
-    } else if (tab === 'monitor') {
-        document.getElementById('panelMonitor')?.classList.remove('d-none');
-        document.querySelector('#mainTabs .nav-item:last-child .nav-link')?.classList.add('active');
-        startMonitorAutoRefresh();
     }
 }
 
@@ -331,6 +321,8 @@ async function loadStats() {
             document.getElementById('runningJobs').textContent = d.normal  ?? 0;
             document.getElementById('pausedJobs').textContent  = d.paused  ?? 0;
             document.getElementById('blockedJobs').textContent = d.blocked ?? 0;
+            document.getElementById('avgLatency').textContent  = d.avgLatencyMs != null ? d.avgLatencyMs + ' ms' : '-';
+            document.getElementById('maxLatency').textContent  = d.maxLatencyMs != null ? d.maxLatencyMs + ' ms' : '-';
         }
     } catch (error) {
         console.error('加载统计失败:', error);
@@ -2029,246 +2021,4 @@ function showToast(message, type = 'info') {
     const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
     toast.show();
     
-}
-
-// ==================== 系统监控 ====================
-let monitorRefreshTimer = null;
-let chartInstances = {};
-
-function initCharts() {
-    // 销毁旧图表
-    Object.values(chartInstances).forEach(chart => chart?.destroy());
-    chartInstances = {};
-
-    const commonConfig = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: true, position: 'top' },
-            filler: { propagate: true }
-        },
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-            x: { grid: { display: true, color: 'rgba(0, 0, 0, 0.05)' } },
-            y: { grid: { display: true, color: 'rgba(0, 0, 0, 0.05)' }, beginAtZero: true }
-        }
-    };
-
-    // CPU 图表
-    const cpuCtx = document.getElementById('cpuChart')?.getContext('2d');
-    if (cpuCtx) {
-        chartInstances.cpu = new Chart(cpuCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'CPU 使用率 (%)',
-                    data: [],
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#667eea',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 5
-                }]
-            },
-            options: { ...commonConfig, scales: { ...commonConfig.scales, y: { ...commonConfig.scales.y, max: 100 } } }
-        });
-    }
-
-    // 内存图表
-    const memCtx = document.getElementById('memoryChart')?.getContext('2d');
-    if (memCtx) {
-        chartInstances.memory = new Chart(memCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: '内存占用 (MB)',
-                    data: [],
-                    borderColor: '#f5576c',
-                    backgroundColor: 'rgba(245, 87, 108, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#f5576c',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 5
-                }]
-            },
-            options: commonConfig
-        });
-    }
-
-    // 线程图表
-    const threadCtx = document.getElementById('threadChart')?.getContext('2d');
-    if (threadCtx) {
-        chartInstances.thread = new Chart(threadCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: '活跃线程数',
-                    data: [],
-                    borderColor: '#00f2fe',
-                    backgroundColor: 'rgba(0, 242, 254, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#00f2fe',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 5
-                }]
-            },
-            options: commonConfig
-        });
-    }
-
-    // 延迟图表
-    const latencyCtx = document.getElementById('latencyChart')?.getContext('2d');
-    if (latencyCtx) {
-        chartInstances.latency = new Chart(latencyCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: '平均延迟 (ms)',
-                    data: [],
-                    borderColor: '#38ef7d',
-                    backgroundColor: 'rgba(56, 239, 125, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#38ef7d',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 5
-                }]
-            },
-            options: commonConfig
-        });
-    }
-
-    loadHistoryData();
-}
-
-async function loadHistoryData() {
-    try {
-        const response = await fetch('/api/monitor/history?minutes=180');
-        if (!response.ok) throw new Error('获取历史数据失败');
-
-        const result = await response.json();
-        const data = result.data?.data || [];
-
-        if (data.length === 0) return;
-
-        const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-        const cpuValues = data.map(d => d.cpuUsagePercent);
-        const memoryValues = data.map(d => d.memoryMb);
-        const threadValues = data.map(d => d.workerThreadCount);
-        const latencyValues = data.map(d => d.averageLatencyMs);
-
-        if (chartInstances.cpu) {
-            chartInstances.cpu.data.labels = labels;
-            chartInstances.cpu.data.datasets[0].data = cpuValues;
-            chartInstances.cpu.update();
-        }
-
-        if (chartInstances.memory) {
-            chartInstances.memory.data.labels = labels;
-            chartInstances.memory.data.datasets[0].data = memoryValues;
-            chartInstances.memory.update();
-        }
-
-        if (chartInstances.thread) {
-            chartInstances.thread.data.labels = labels;
-            chartInstances.thread.data.datasets[0].data = threadValues;
-            chartInstances.thread.update();
-        }
-
-        if (chartInstances.latency) {
-            chartInstances.latency.data.labels = labels;
-            chartInstances.latency.data.datasets[0].data = latencyValues;
-            chartInstances.latency.update();
-        }
-    } catch (error) {
-        console.error('加载历史数据失败:', error);
-    }
-}
-
-async function refreshMonitor() {
-    try {
-        const response = await fetch('/api/monitor/dashboard');
-        if (!response.ok) throw new Error('获取监控数据失败');
-
-        const result = await response.json();
-        const data = result.data || result;
-        updateMonitorUI(data);
-        updateLastUpdateTime();
-        // 每次刷新仪表板时也更新一次历史图表
-        loadHistoryData();
-    } catch (error) {
-        console.error('刷新监控数据出错:', error);
-        showToast('error', '获取监控数据失败');
-    }
-}
-
-function updateMonitorUI(data) {
-    const system = data.system;
-    const jobLatency = data.jobLatency;
-
-    // CPU 和内存摘要
-    document.getElementById('cpuUsage').textContent = system.cpu.usagePercent + '%';
-    document.getElementById('memoryUsage').textContent = system.memory.workingSetMb + ' MB';
-    document.getElementById('threadCount').textContent = system.threadPool.workerThreadCount;
-    document.getElementById('avgLatency').textContent = jobLatency.averageLatencyMs.toFixed(0) + ' ms';
-
-    // 内存详细信息
-    document.getElementById('managedMemory').textContent = system.memory.totalManagedMemoryMb + ' MB';
-    document.getElementById('workingSet').textContent = system.memory.workingSetMb + ' MB';
-    document.getElementById('heapSize').textContent = system.memory.heapSizeMb + ' MB';
-    document.getElementById('gen2Collections').textContent = system.memory.gen2CollectionCount;
-
-    // 任务延迟统计
-    document.getElementById('jobAvgLatency').textContent = jobLatency.averageLatencyMs.toFixed(0) + ' ms';
-    document.getElementById('jobMaxLatency').textContent = jobLatency.maxLatencyMs + ' ms';
-    document.getElementById('jobMinLatency').textContent = jobLatency.minLatencyMs + ' ms';
-    document.getElementById('jobExecutions').textContent = jobLatency.totalExecutions;
-}
-
-function updateLastUpdateTime() {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString('zh-CN');
-    const lastUpdateEl = document.getElementById('lastUpdateTime');
-    if (lastUpdateEl) {
-        lastUpdateEl.textContent = `最后更新：${timeStr}`;
-    }
-}
-
-function startMonitorAutoRefresh() {
-    if (monitorRefreshTimer) {
-        clearInterval(monitorRefreshTimer);
-        monitorRefreshTimer = null;
-    }
-    initCharts();
-    refreshMonitor();
-    monitorRefreshTimer = setInterval(() => { refreshMonitor(); }, 30000);
-}
-
-function stopMonitorRefresh() {
-    if (monitorRefreshTimer) {
-        clearInterval(monitorRefreshTimer);
-        monitorRefreshTimer = null;
-    }
-    Object.values(chartInstances).forEach(chart => chart?.destroy());
-    chartInstances = {};
 }

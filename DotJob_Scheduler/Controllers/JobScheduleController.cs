@@ -46,18 +46,21 @@ public class JobScheduleController : ControllerBase
     }
 
     /// <summary>
-    /// 查询任务统计（全量，不分页），用于首页统计卡片
+    /// 查询任务统计（全量，不分页）与执行延迟（最近 1000 次执行），用于首页统计卡片
     /// </summary>
     [HttpGet("stats")]
     public async Task<object> QueryJobStatsAsync()
     {
         var all = await _schedulerCenterServices.QueryAllJobsAsync();
+        var (avgLatencyMs, maxLatencyMs) = await _schedulerCenterServices.QueryLatencyStatsAsync();
         return new
         {
             Total   = all.Count,
             Normal  = all.Count(j => j.TriggerState == 1),
             Paused  = all.Count(j => j.TriggerState == 2),
-            Blocked = all.Count(j => j.TriggerState == 5)
+            Blocked = all.Count(j => j.TriggerState == 5),
+            AvgLatencyMs = avgLatencyMs,
+            MaxLatencyMs = maxLatencyMs
         };
     }
 

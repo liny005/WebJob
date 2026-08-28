@@ -6,7 +6,7 @@
     <title>WebJob任务调度平台</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="css/site.css?v=20260820a" rel="stylesheet">
+    <link href="css/site.css?v=20260828a" rel="stylesheet">
 </head>
 <body>
     <!-- 导航栏 -->
@@ -37,11 +37,6 @@
                     <a class="nav-link" href="#" onclick="switchTab('notify')">
                         <i class="bi bi-bell"></i> 推送配置
                         <span class="badge bg-warning text-dark admin-badge">Admin</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="switchTab('monitor')">
-                        <i class="bi bi-speedometer2"></i> 系统监控
                     </a>
                 </li>
             </ul>
@@ -87,9 +82,6 @@
 
     <!-- ===== 推送配置 Tab (Admin Only) ===== -->
     <div id="panelNotify" class="main-content d-none"></div><!-- /panelNotify -->
-
-    <!-- ===== 系统监控 Tab ===== -->
-    <div id="panelMonitor" class="main-content d-none"></div><!-- /panelMonitor -->
 
     <!-- 新增用户模态框 -->
     <div class="modal fade" id="addUserModal" tabindex="-1">
@@ -583,8 +575,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="js/app.js?v=20260820c"></script>
+    <script src="js/app.js?v=20260828a"></script>
     <!-- 自定义轻量 Tooltip -->
     <div id="customTooltip"></div>
 </body>

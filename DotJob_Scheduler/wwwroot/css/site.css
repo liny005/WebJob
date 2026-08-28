@@ -74,16 +74,20 @@ body {
     background: var(--primary-gradient);
 }
 .stat-card {
-    padding: 20px;
+    padding: 15px 10px;
     border-radius: 15px;
     color: white;
     margin-bottom: 20px;
+    text-align: center;
+    overflow: hidden;
 }
 .stat-card.total   { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 .stat-card.running { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
 .stat-card.paused  { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
 .stat-card.blocked { background: linear-gradient(135deg, #1a1a2e 0%, #4a4a6a 100%); }
-.stat-card h3 { font-size: 2rem; font-weight: 700; margin-bottom: 5px; }
+.stat-card.latency { background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%); }
+.stat-card h3 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; white-space: nowrap; }
+.stat-card p  { font-size: 0.85rem; white-space: nowrap; }
 .dropdown-menu {
     border-radius: 10px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
